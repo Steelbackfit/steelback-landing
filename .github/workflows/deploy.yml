@@ -1,0 +1,53 @@
+name: Deploy
+
+# Alternativa a "Connect to Git" del panel de Cloudflare, para cuando no se
+# quiere dar acceso OAuth de GitHub a Cloudflare. Hace lo mismo: en cada push
+# a main pasa los tests, compila y despliega.
+#
+# Requiere dos secretos en GitHub (Settings → Secrets and variables → Actions):
+#   CLOUDFLARE_API_TOKEN   token con permiso "Cloudflare Pages: Edit"
+#                          se crea en dash.cloudflare.com/profile/api-tokens
+#   CLOUDFLARE_ACCOUNT_ID  se ve con `npx wrangler whoami`
+#
+# Mientras no existan, el job de despliegue se salta solo y no ensucia el
+# historial con builds en rojo. Los tests sí corren siempre (ver ci.yml).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: ¿Hay credenciales de Cloudflare?
+        id: check
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -n "$TOKEN" ] && [ -n "$ACCOUNT" ]; then
+            echo "listo=si" >> "$GITHUB_OUTPUT"
+          else
+            echo "listo=no" >> "$GITHUB_OUTPUT"
+            echo "::notice::Sin CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID: se omite el despliegue."
+          fi
+
+      - name: Tests y build
+        if: steps.check.outputs.listo == 'si'
+        run: npm run build
+
+      - name: Desplegar en Cloudflare Pages
+        if: steps.check.outputs.listo == 'si'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist --project-name steelback-landing --branch main
