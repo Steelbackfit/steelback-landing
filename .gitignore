@@ -1,0 +1,15 @@
+# Export del prototipo de Claude Design (fuente, no se sirve)
+Steelback Landing.html
+
+# Material de trabajo del diseño: capturas y guía en PDF (5,5 MB)
+uploads/pasted-*.png
+uploads/*.pdf
+
+# Configuración local de herramientas
+.claude/settings.local.json
+
+# Dependencias y artefactos
+node_modules/
+dist/
+.DS_Store
+Thumbs.db
