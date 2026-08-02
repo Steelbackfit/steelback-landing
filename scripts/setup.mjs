@@ -21,6 +21,9 @@ import { randomBytes } from 'node:crypto';
 
 const PROYECTO = 'steelback-landing';
 const BD = 'steelback-leads';
+// Dominio a conectar. Solo funciona si el dominio ya está dado de alta en
+// Cloudflare (nameservers apuntando ahí). Ponlo a '' para saltarse el paso.
+const DOMINIO = process.env.CF_DOMINIO ?? 'steelbackfit.com';
 
 const paso = n => console.log(`\n\x1b[1m── ${n}\x1b[0m`);
 const ok = m => console.log(`   \x1b[32m✓\x1b[0m ${m}`);
@@ -138,6 +141,22 @@ console.log(despliegue.salida.split('\n').filter(l => l.trim()).slice(-6).join('
 
 const url = despliegue.salida.match(/https:\/\/[^\s]+\.pages\.dev/)?.[0]
   || `https://${PROYECTO}.pages.dev`;
+
+// ── Dominio propio (opcional) ────────────────────────────────────────────
+if (DOMINIO) {
+  paso(`Extra  Conectando ${DOMINIO}`);
+  const dom = intenta(['pages', 'domain', 'add', DOMINIO, '--project-name', PROYECTO]);
+  if (dom.ok) {
+    ok(`${DOMINIO} añadido — el SSL tarda unos minutos`);
+  } else if (/already|exists/i.test(dom.salida)) {
+    ok('ya estaba conectado');
+  } else {
+    aviso(`no se ha podido conectar ${DOMINIO}.`);
+    aviso('Lo normal es que el dominio aún no esté en Cloudflare: hay que');
+    aviso('añadirlo en "Add a site" y mover sus nameservers desde IONOS.');
+    aviso('Mientras tanto la landing funciona en la URL de pages.dev.');
+  }
+}
 
 console.log(`
 \x1b[1m─────────────────────────────────────────────\x1b[0m
