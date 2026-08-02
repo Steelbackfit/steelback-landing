@@ -12,4 +12,4 @@ binding = "DB"
 database_name = "steelback-leads"
 # Sustituye por el ID real que devuelve:
 #   npx wrangler d1 create steelback-leads
-database_id = "PON_AQUI_EL_ID_DE_TU_D1"
+database_id = "7badacf8-b4e3-48b0-af26-e19cbede0594"
