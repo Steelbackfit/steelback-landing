@@ -1,6 +1,16 @@
 # Steelback — Landing
 
-Landing de captación de Steelback, publicada en **steelback.com/landing**.
+Landing de captación de Steelback, pensada para publicarse en
+**steelbackfit.com/landing**.
+
+> **Sobre el dominio.** El encargo inicial decía `steelback.com`, pero ese
+> dominio **no es nuestro**: está aparcado en venta en HugeDomains
+> (nameservers `nsg1.namebrightdns.com`, redirige a su página de compra). El
+> dominio registrado es `steelbackfit.com`, en nameservers de IONOS
+> (`ns1099.ui-dns.org`) y todavía sin nada servido. La documentación asume
+> `steelbackfit.com`; si de verdad se compra `steelback.com`, basta con
+> cambiar el dominio en Custom domains, el código no depende de él.
+
 Página estática (un `index.html` con CSS y JS en línea) más dos Pages Functions
 para la captación de emails, con base de datos **Cloudflare D1**. Todo dentro
 del plan gratuito.
@@ -70,22 +80,34 @@ cerrados en vez de servir datos mal configurados.
 
 ### 4. Dominio
 
-Proyecto → **Custom domains** → añade `steelback.com`. Si el dominio ya está en
-Cloudflare se resuelve en dos clics, con SSL y CDN automáticos.
+`steelbackfit.com` **no está en Cloudflare**: sus nameservers son de IONOS
+(`ns1099.ui-dns.org`, …). Antes de poder añadirlo como Custom domain hay que
+pasar el dominio a Cloudflare:
 
-> La raíz `/` redirige a `/landing` con un 301. Si `steelback.com` ya sirve otra
-> web, **no** conectes el dominio raíz a este proyecto: usa un subdominio o una
-> regla de Worker para enrutar solo `/landing`.
+1. Cloudflare → **Add a site** → `steelbackfit.com` → plan **Free**.
+2. Cloudflare te da dos nameservers propios.
+3. En el panel de **IONOS**, sustituye los nameservers actuales por esos.
+4. La propagación tarda de minutos a 24 h. Cloudflare avisa por email.
+5. Ya en el proyecto de Pages → **Custom domains** → añade `steelbackfit.com`.
+
+> ⚠️ Cambiar los nameservers mueve **todo** el DNS del dominio a Cloudflare,
+> incluido el correo. Antes de tocarlos, copia los registros **MX** y **TXT**
+> (SPF, DKIM) que tengas en IONOS y recréalos en Cloudflare, o dejarás
+> `info@steelbackfit.com` sin recibir correo.
+
+Mientras tanto la landing es accesible en la URL que da Pages
+(`steelback-landing.pages.dev/landing`), que sirve para probar todo el circuito
+sin tocar el DNS.
 
 ## Cómo ver los registros
 
 ```bash
 # JSON
-curl -H "Authorization: Bearer $ADMIN_TOKEN" https://steelback.com/api/leads
+curl -H "Authorization: Bearer $ADMIN_TOKEN" https://steelbackfit.com/api/leads
 
 # CSV descargable
 curl -H "Authorization: Bearer $ADMIN_TOKEN" \
-     "https://steelback.com/api/leads?formato=csv" -o leads.csv
+     "https://steelbackfit.com/api/leads?formato=csv" -o leads.csv
 
 # Directamente contra la base de datos
 npx wrangler d1 execute steelback-leads --remote \
