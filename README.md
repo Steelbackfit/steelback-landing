@@ -167,6 +167,7 @@ npm run dev           # servidor local con D1 y bindings de prueba
 
 ```
 index.html                 fuente de la landing (CSS y JS en línea)
+GUIA-NUEVA-LANDING.md      cómo montar otra landing igual que ésta
 lib/validation.mjs         lógica pura: validación, hashing, CSV
 functions/api/subscribe.js POST /api/subscribe — alta
 functions/api/leads.js     GET  /api/leads     — consulta (token)
