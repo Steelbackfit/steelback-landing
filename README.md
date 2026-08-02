@@ -188,3 +188,9 @@ CDN público. El CI falla si aparece un PDF en `dist/`.
 - Los enlaces sociales del footer y el logo apuntan a `href="#"`.
 - `HEAD /api/leads` responde 405 en vez de 200 sin cuerpo. Irrelevante para un
   endpoint de administración, pero no es estrictamente correcto.
+
+---
+
+Despliegue automático activo: cada push a `main` ejecuta los tests, compila y
+publica en Cloudflare Pages. Si algún test falla, el build se detiene y no se
+despliega.
