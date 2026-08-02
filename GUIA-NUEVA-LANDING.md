@@ -554,10 +554,35 @@ Las rutas de Workers **sí** son por path (`tudominio.com/landing/*` gana sobre
 nivel.** `landing.tudominio.com` entra gratis; `a.b.tudominio.com` necesitaría
 un certificado Advanced, que es de pago.
 
-### 7.2 Llevar un dominio externo a Cloudflare
+### 7.2 Conectar un subdominio SIN mover el DNS (lo habitual)
 
-El registro se queda en tu registrador actual (IONOS, GoDaddy…) y le sigues
-pagando a ellos. Solo cambian los nameservers. Cloudflare no cobra por esto.
+**No hace falta llevar el dominio a Cloudflare.** Pages admite un dominio
+personalizado con el DNS en otro proveedor mediante un CNAME, y emite el
+certificado igualmente. Tu DNS y tu correo se quedan donde están, intactos.
+
+Solo vale para **subdominios**. Un dominio raíz sí exige los nameservers de
+Cloudflare, porque un CNAME en el ápex no es válido en DNS.
+
+**El orden no es negociable:**
+
+1. Pages → proyecto → **Custom domains** → **Set up a custom domain** →
+   `landing.tudominio.com`.
+2. Cloudflare te dice el CNAME que espera. Créalo en tu proveedor de DNS:
+
+   | Tipo | Nombre de host | Apunta a |
+   |---|---|---|
+   | `CNAME` | `landing` | `tu-proyecto.pages.dev` |
+
+3. Vuelve a Cloudflare y confirma. Valida y emite el SSL en unos minutos.
+
+⚠️ **Crear el CNAME sin haber dado antes de alta el dominio en Pages hace que
+el subdominio no resuelva.** La documentación de Cloudflare lo advierte
+expresamente: primero *Add a custom domain*, después el registro DNS.
+
+### 7.3 Mover todo el DNS a Cloudflare (solo si necesitas el dominio raíz)
+
+El registro se queda en tu registrador y le sigues pagando a ellos; solo cambian
+los nameservers. Cloudflare no cobra por esto.
 
 1. Cloudflare → **Add a site** → tu dominio → plan **Free**.
 2. **Antes de tocar nada, comprueba que ha importado los registros de correo.**
@@ -568,7 +593,6 @@ pagando a ellos. Solo cambian los nameservers. Cloudflare no cobra por esto.
    ```
 3. En tu registrador, sustituye los nameservers por los de Cloudflare.
 4. Propagación: de minutos a 24 h.
-5. Pages → proyecto → **Custom domains** → añade el hostname.
 
 ⚠️ **Cambiar los nameservers mueve TODO el DNS, incluido el correo.** Si los
 registros **MX** no están replicados en Cloudflare, dejas de recibir email. Y

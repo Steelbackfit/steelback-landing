@@ -108,12 +108,40 @@ cerrados en vez de servir datos mal configurados.
 
 ### 4. Dominio: `landing.steelbackfit.com`
 
-`steelbackfit.com` **no está en Cloudflare**: sus nameservers son de IONOS. El
-registro se queda en IONOS (le sigues pagando a ellos); solo cambian los
-nameservers. Cloudflare no cobra por esto en el plan Free.
+**No hace falta mover los nameservers.** Pages admite un dominio personalizado
+con el DNS en otro proveedor, mediante un CNAME, y emite el SSL igualmente.
+El DNS y el correo se quedan intactos en IONOS. Esto solo funciona con
+**subdominios**; un dominio raíz sí exigiría los nameservers de Cloudflare.
+
+**El orden importa y no es negociable:**
+
+1. Pages → proyecto `steelback-landing` → **Custom domains** → **Set up a
+   custom domain** → `landing.steelbackfit.com`.
+2. Cloudflare muestra el CNAME que espera. Créalo en **IONOS**:
+
+   | Campo | Valor |
+   |---|---|
+   | Tipo | `CNAME` |
+   | Nombre de host | `landing` (solo eso, no el dominio entero) |
+   | Apunta a | `steelback-landing.pages.dev` |
+   | TTL | el que venga por defecto |
+
+3. Vuelve a Cloudflare y confirma. Valida el DNS y emite el certificado.
+
+> ⚠️ **Si creas el CNAME en IONOS sin haber dado antes de alta el dominio en
+> Pages, el subdominio no resuelve.** La documentación de Cloudflare lo dice
+> expresamente: hay que pasar primero por *Add a custom domain*.
+
+Mientras tanto la landing es accesible en `steelback-landing.pages.dev`.
+
+<details>
+<summary>Alternativa: mover todo el DNS a Cloudflare (no recomendada aquí)</summary>
+
+Solo tiene sentido si algún día quieres usar el dominio raíz o el resto de
+funciones de Cloudflare sobre `steelbackfit.com`. Implica riesgo para el correo:
 
 1. Cloudflare → **Add a site** → `steelbackfit.com` → plan **Free**.
-2. **Comprueba que ha importado estos registros** antes de seguir:
+2. Comprueba que ha importado estos registros **antes** de seguir:
 
    | Tipo | Nombre | Valor | Proxy |
    |------|--------|-------|-------|
@@ -123,19 +151,12 @@ nameservers. Cloudflare no cobra por esto en el plan Free.
    | TXT  | `@`    | `zone-ownership-verification-9abcb6…` | — |
    | A    | `@`    | `217.160.0.222` | a tu gusto |
 
-3. En **IONOS**, sustituye los nameservers por los dos que te dé Cloudflare.
-4. Propagación: de minutos a 24 h. Cloudflare avisa por email.
-5. Pages → proyecto `steelback-landing` → **Custom domains** →
-   **Set up a custom domain** → `landing.steelbackfit.com`. El registro CNAME
-   lo crea Cloudflare solo, y el SSL tarda unos minutos.
+3. En IONOS, sustituye los nameservers por los de Cloudflare.
 
-> ⚠️ **Los MX deben quedar en DNS only (nube gris).** Cloudflare no puede hacer
-> de proxy de correo: si los pones en naranja, dejas de recibir email en
-> `info@steelbackfit.com`. Los TXT de SPF y verificación son igual de
-> importantes: sin ellos tu correo saliente empieza a caer en spam.
+⚠️ Los MX deben quedar en **DNS only** (nube gris): Cloudflare no hace de proxy
+de correo y en naranja rompes la entrega a `info@steelbackfit.com`.
 
-Mientras tanto la landing es accesible en `steelback-landing.pages.dev`, que
-sirve para probar todo el circuito sin tocar el DNS.
+</details>
 
 ## Cómo ver los registros
 
