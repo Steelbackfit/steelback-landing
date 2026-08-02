@@ -1,15 +1,19 @@
 # Steelback — Landing
 
 Landing de captación de Steelback, pensada para publicarse en
-**steelbackfit.com/landing**.
+**landing.steelbackfit.com**, con `steelbackfit.com` libre para la app.
 
 > **Sobre el dominio.** El encargo inicial decía `steelback.com`, pero ese
-> dominio **no es nuestro**: está aparcado en venta en HugeDomains
-> (nameservers `nsg1.namebrightdns.com`, redirige a su página de compra). El
-> dominio registrado es `steelbackfit.com`, en nameservers de IONOS
-> (`ns1099.ui-dns.org`) y todavía sin nada servido. La documentación asume
-> `steelbackfit.com`; si de verdad se compra `steelback.com`, basta con
-> cambiar el dominio en Custom domains, el código no depende de él.
+> dominio **no es nuestro**: está aparcado en venta en HugeDomains y redirige
+> a su página de compra. El dominio registrado es `steelbackfit.com`, en
+> nameservers de IONOS.
+>
+> Se eligió un **subdominio** en lugar de la ruta `steelbackfit.com/landing`
+> porque el dominio personalizado de Pages se asocia a un *hostname* completo:
+> un proyecto conectado a `steelbackfit.com` se queda con todo el dominio y no
+> deja sitio a la app. Con subdominio, landing y app despliegan por separado y
+> no comparten cookies. El coste es cero: los subdominios de primer nivel
+> entran en el Universal SSL gratuito.
 
 Página estática (un `index.html` con CSS y JS en línea) más dos Pages Functions
 para la captación de emails, con base de datos **Cloudflare D1**. Todo dentro
@@ -102,36 +106,46 @@ node -e "console.log(crypto.randomUUID().replace(/-/g,'') + crypto.randomUUID().
 Sin `IP_SALT` o `ADMIN_TOKEN` los endpoints devuelven 503 a propósito: fallan
 cerrados en vez de servir datos mal configurados.
 
-### 4. Dominio
+### 4. Dominio: `landing.steelbackfit.com`
 
-`steelbackfit.com` **no está en Cloudflare**: sus nameservers son de IONOS
-(`ns1099.ui-dns.org`, …). Antes de poder añadirlo como Custom domain hay que
-pasar el dominio a Cloudflare:
+`steelbackfit.com` **no está en Cloudflare**: sus nameservers son de IONOS. El
+registro se queda en IONOS (le sigues pagando a ellos); solo cambian los
+nameservers. Cloudflare no cobra por esto en el plan Free.
 
 1. Cloudflare → **Add a site** → `steelbackfit.com` → plan **Free**.
-2. Cloudflare te da dos nameservers propios.
-3. En el panel de **IONOS**, sustituye los nameservers actuales por esos.
-4. La propagación tarda de minutos a 24 h. Cloudflare avisa por email.
-5. Ya en el proyecto de Pages → **Custom domains** → añade `steelbackfit.com`.
+2. **Comprueba que ha importado estos registros** antes de seguir:
 
-> ⚠️ Cambiar los nameservers mueve **todo** el DNS del dominio a Cloudflare,
-> incluido el correo. Antes de tocarlos, copia los registros **MX** y **TXT**
-> (SPF, DKIM) que tengas en IONOS y recréalos en Cloudflare, o dejarás
-> `info@steelbackfit.com` sin recibir correo.
+   | Tipo | Nombre | Valor | Proxy |
+   |------|--------|-------|-------|
+   | MX   | `@`    | `mx00.ionos.es` (prioridad 10) | DNS only |
+   | MX   | `@`    | `mx01.ionos.es` (prioridad 10) | DNS only |
+   | TXT  | `@`    | `v=spf1 include:_spf-eu.ionos.com ~all` | — |
+   | TXT  | `@`    | `zone-ownership-verification-9abcb6…` | — |
+   | A    | `@`    | `217.160.0.222` | a tu gusto |
 
-Mientras tanto la landing es accesible en la URL que da Pages
-(`steelback-landing.pages.dev/landing`), que sirve para probar todo el circuito
-sin tocar el DNS.
+3. En **IONOS**, sustituye los nameservers por los dos que te dé Cloudflare.
+4. Propagación: de minutos a 24 h. Cloudflare avisa por email.
+5. Pages → proyecto `steelback-landing` → **Custom domains** →
+   **Set up a custom domain** → `landing.steelbackfit.com`. El registro CNAME
+   lo crea Cloudflare solo, y el SSL tarda unos minutos.
+
+> ⚠️ **Los MX deben quedar en DNS only (nube gris).** Cloudflare no puede hacer
+> de proxy de correo: si los pones en naranja, dejas de recibir email en
+> `info@steelbackfit.com`. Los TXT de SPF y verificación son igual de
+> importantes: sin ellos tu correo saliente empieza a caer en spam.
+
+Mientras tanto la landing es accesible en `steelback-landing.pages.dev`, que
+sirve para probar todo el circuito sin tocar el DNS.
 
 ## Cómo ver los registros
 
 ```bash
 # JSON
-curl -H "Authorization: Bearer $ADMIN_TOKEN" https://steelbackfit.com/api/leads
+curl -H "Authorization: Bearer $ADMIN_TOKEN" https://landing.steelbackfit.com/api/leads
 
 # CSV descargable
 curl -H "Authorization: Bearer $ADMIN_TOKEN" \
-     "https://steelbackfit.com/api/leads?formato=csv" -o leads.csv
+     "https://landing.steelbackfit.com/api/leads?formato=csv" -o leads.csv
 
 # Directamente contra la base de datos
 npx wrangler d1 execute steelback-leads --remote \
@@ -161,10 +175,11 @@ scripts/build.mjs          copia la whitelist a dist/
 test/                      node:test
 ```
 
-**`dist/landing.html`, no `dist/landing/index.html`.** Con un `index.html`
-dentro de una carpeta, Pages normaliza `/landing` → `/landing/` con un 308, y
-cualquier regla que devuelva la barra final provoca un bucle infinito de
-redirecciones. Servido como `landing.html`, `/landing` responde 200 directo.
+**La landing se sirve en la raíz (`dist/index.html`).** Al vivir en su propio
+subdominio, `landing.steelbackfit.com/landing` no tendría sentido. La ruta
+antigua `/landing` se mantiene redirigida a `/` para no romper enlaces ya
+compartidos. **No añadas la regla inversa** (`/` → `/landing`): Pages normaliza
+las rutas y se produce un bucle infinito de redirecciones. El CI lo comprueba.
 
 **La whitelist del build es deliberada.** `uploads/` guarda material interno
 (capturas de trabajo y la guía en PDF, 5,5 MB). `.gitignore` no filtra lo que

@@ -24,14 +24,18 @@ jobs:
       - name: Build
         run: npm run build:only
 
-      - name: La landing tiene que quedar en /landing
+      - name: La landing tiene que quedar en la raíz
         run: |
-          # landing.html, no landing/index.html: ver README (bucle de redirecciones)
-          test -f dist/landing.html
-          test ! -e dist/landing/index.html
+          test -f dist/index.html
           test -f dist/_headers
           test -f dist/_redirects
           test -f dist/robots.txt
+          # /landing debe redirigir a /, nunca al revés (bucle infinito)
+          grep -q '^/landing ' dist/_redirects
+          if grep -qE '^/ +/landing' dist/_redirects; then
+            echo "::error::Regla / -> /landing: provocaría un bucle de redirecciones"
+            exit 1
+          fi
 
       - name: No se publica material interno
         run: |

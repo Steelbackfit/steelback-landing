@@ -1,4 +1,6 @@
-# La landing vive en /landing (servida desde landing.html, sin barra final).
-# No añadas una regla para /landing/ : Pages ya normaliza y una regla de
-# vuelta provoca un bucle infinito de redirecciones.
-/    /landing    301
+# La landing se sirve en la raíz del subdominio (landing.steelbackfit.com).
+# /landing era la ruta anterior: se mantiene redirigida para no romper
+# enlaces ya compartidos. No pongas una regla de vuelta desde / o creas un
+# bucle infinito.
+/landing     /    301
+/landing/    /    301

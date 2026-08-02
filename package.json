@@ -9,10 +9,10 @@
     "test": "node --test",
     "build": "npm test && node scripts/build.mjs",
     "build:only": "node scripts/build.mjs",
-    "dev": "npm run build:only && wrangler pages dev dist --d1 DB --binding IP_SALT=sal-local ADMIN_TOKEN=token-local",
-    "db:local": "wrangler d1 execute steelback-leads --local --file schema.sql",
-    "db:remote": "wrangler d1 execute steelback-leads --remote --file schema.sql",
-    "deploy": "npm run build && wrangler pages deploy dist --project-name steelback-landing"
+    "dev": "npm run build:only && npx wrangler pages dev dist --binding IP_SALT=sal-local ADMIN_TOKEN=token-local",
+    "db:local": "npx wrangler d1 execute steelback-leads --local --file schema.sql",
+    "db:remote": "npx wrangler d1 execute steelback-leads --remote --file schema.sql",
+    "deploy": "npm run build && npx wrangler pages deploy dist --project-name steelback-landing"
   },
   "devDependencies": {
     "wrangler": "^4.118.0"

@@ -1,13 +1,11 @@
 // Copia a dist/ solo los ficheros que se sirven en producción.
 //
-// La landing se publica en /landing. El HTML va a dist/landing.html, NO a
-// dist/landing/index.html: con index.html dentro de una carpeta, Pages
-// normaliza /landing → /landing/ con un 308, y cualquier regla que intente
-// devolver la barra final crea un bucle de redirecciones. Como landing.html
-// se sirve en /landing con 200 directo, no hay redirección que arreglar.
+// La landing vive en su propio subdominio (landing.steelbackfit.com), así que
+// se sirve en la RAÍZ: dist/index.html. La ruta antigua /landing se mantiene
+// como redirección para no romper enlaces ya compartidos.
 //
-// _headers y _redirects tienen que quedar en la RAÍZ de dist/: Pages solo
-// los lee ahí.
+// _headers y _redirects tienen que quedar en la raíz de dist/: Pages solo los
+// lee ahí.
 //
 // Whitelist deliberada: uploads/ contiene material interno de diseño
 // (capturas de trabajo y la guía en PDF, 5,5 MB) que no debe acabar en un
@@ -19,7 +17,7 @@ const OUT = 'dist';
 
 // origen -> destino dentro de dist/
 const ASSETS = [
-  ['index.html', 'landing.html'],
+  ['index.html', 'index.html'],
   ['logo-bolt.svg', 'assets/logo-bolt.svg'],
   ['uploads/SIMBOLO.svg', 'assets/SIMBOLO.svg'],
   ['uploads/logo_steelback_white.png', 'assets/logo_steelback_white.png'],
@@ -36,10 +34,10 @@ for (const [origen, destino] of ASSETS) {
   console.log('  +', destino);
 }
 
-// La landing sí se indexa; los endpoints no.
+// La landing se indexa; los endpoints no.
 await writeFile(
   join(OUT, 'robots.txt'),
-  ['User-agent: *', 'Allow: /landing', 'Disallow: /api/', ''].join('\n')
+  ['User-agent: *', 'Allow: /', 'Disallow: /api/', ''].join('\n')
 );
 console.log('  +', 'robots.txt');
 
