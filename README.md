@@ -17,6 +17,30 @@ del plan gratuito.
 
 ## Puesta en marcha (una sola vez)
 
+### Camino rápido
+
+```bash
+npx wrangler login     # abre el navegador, una sola vez
+npm run setup          # crea D1, aplica el esquema, crea Pages, secretos y despliega
+```
+
+`npm run setup` es idempotente: se puede repetir sin romper nada. Al terminar
+imprime la URL y el `ADMIN_TOKEN` **una sola vez** — guárdalo.
+
+> Solo está verificado el arranque del script (detecta la falta de sesión y
+> para con código 1). Los pasos que tocan la cuenta de Cloudflare no se han
+> podido ejecutar sin credenciales. Si alguno falla, sigue el camino manual.
+
+Después queda **un paso que no automatiza nadie**, porque es una autorización
+OAuth contra tu cuenta de GitHub:
+
+> Cloudflare → Workers & Pages → `steelback-landing` → Settings → **Builds** →
+> **Connect to Git** → `Steelbackfit/steelback-landing`, build command
+> `npm run build`, output directory `dist`. Desde ahí cada push a `main`
+> despliega solo.
+
+### Camino manual
+
 Los pasos 1–4 requieren tu cuenta de Cloudflare, así que los tienes que hacer tú.
 
 ### 1. Crear la base de datos D1

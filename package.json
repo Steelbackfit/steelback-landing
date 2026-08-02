@@ -5,6 +5,7 @@
   "description": "Landing de captación de Steelback",
   "type": "module",
   "scripts": {
+    "setup": "node scripts/setup.mjs",
     "test": "node --test",
     "build": "npm test && node scripts/build.mjs",
     "build:only": "node scripts/build.mjs",
