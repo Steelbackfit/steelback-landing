@@ -1,0 +1,15 @@
+{
+  "name": "steelback-landing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Landing de captación de Steelback",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "preview": "npm run build && npx wrangler pages dev dist",
+    "deploy": "npm run build && npx wrangler pages deploy dist --project-name steelback-landing"
+  },
+  "devDependencies": {
+    "wrangler": "^4.118.0"
+  }
+}
