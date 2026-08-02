@@ -142,6 +142,28 @@
       transition: border-color 0.2s;
     }
     .email-form:focus-within { border-color: rgba(0,87,255,0.65); }
+
+    /* Honeypot: invisible para personas, rellenable por bots. Fuera del flujo
+       y del foco, sin display:none (algunos bots lo detectan). */
+    .hp-field {
+      position: absolute;
+      left: -9999px;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .form-error {
+      display: none;
+      margin-top: 12px;
+      font-size: 14px;
+      color: #FF8A8A;
+    }
+    .form-error.visible { display: block; }
+    .email-btn[aria-busy="true"], .cta-btn[aria-busy="true"] {
+      opacity: 0.65;
+      cursor: progress;
+    }
     .email-input {
       flex: 1;
       background: transparent;
@@ -910,12 +932,14 @@
       </h1>
       <p class="hero-subtitle">El primer sistema en español que ajusta tu entrenamiento y nutrición en base a cómo evoluciona tu cuerpo.</p>
       <div>
-        <form class="email-form" id="heroForm" onsubmit="submitForm(event,'heroForm','heroSuccess')">
-          <input class="email-input" type="email" placeholder="tu@email.com" required autocomplete="email">
+        <form class="email-form" id="heroForm" data-signup novalidate>
+          <input class="email-input" type="email" name="email" placeholder="tu@email.com" required autocomplete="email">
+          <input class="hp-field" type="text" name="empresa" tabindex="-1" autocomplete="off" aria-hidden="true">
           <button class="email-btn" type="submit">Quiero acceso anticipado</button>
         </form>
+        <p class="form-error" id="heroError" role="alert"></p>
         <p class="form-note">La app está en desarrollo. Sin fecha de lanzamiento confirmada.</p>
-        <div class="form-success" id="heroSuccess">✓ Apuntado. Te avisamos cuando abramos acceso.</div>
+        <div class="form-success" id="heroSuccess" role="status">✓ Apuntado. Te avisamos cuando abramos acceso.</div>
       </div>
     </div>
 
@@ -1405,11 +1429,13 @@
     <div class="cta-inner">
       <h2 class="cta-title">Sé el primero en probar Steelback.</h2>
       <p class="cta-body">Estamos en fase de desarrollo. Déjanos tu email y te avisamos cuando abramos acceso.</p>
-      <form class="cta-form" id="ctaForm" onsubmit="submitForm(event,'ctaForm','ctaSuccess')">
-        <input class="cta-input" type="email" placeholder="tu@email.com" required autocomplete="email">
+      <form class="cta-form" id="ctaForm" data-signup novalidate>
+        <input class="cta-input" type="email" name="email" placeholder="tu@email.com" required autocomplete="email">
+        <input class="hp-field" type="text" name="empresa" tabindex="-1" autocomplete="off" aria-hidden="true">
         <button class="cta-btn" type="submit">Quiero acceso anticipado</button>
       </form>
-      <div class="form-success" id="ctaSuccess" style="max-width:440px;margin:16px auto 0">✓ Apuntado. Te avisamos cuando abramos acceso.</div>
+      <p class="form-error" id="ctaError" role="alert" style="max-width:440px;margin:12px auto 0"></p>
+      <div class="form-success" id="ctaSuccess" role="status" style="max-width:440px;margin:16px auto 0">✓ Apuntado. Te avisamos cuando abramos acceso.</div>
     </div>
   </section>
 
@@ -1449,12 +1475,70 @@
       setInterval(() => show((idx + 1) % screens.length), 4200);
     });
 
-    // Form submission
-    function submitForm(e, formId, successId) {
-      e.preventDefault();
-      document.getElementById(formId).style.display = 'none';
-      document.getElementById(successId).style.display = 'block';
-    }
+    // Captación de emails
+    const ENDPOINT = '/api/subscribe';
+
+    document.querySelectorAll('form[data-signup]').forEach(form => {
+      const base = form.id.replace(/Form$/, '');
+      const errorEl = document.getElementById(base + 'Error');
+      const successEl = document.getElementById(base + 'Success');
+      const input = form.querySelector('input[name="email"]');
+      const btn = form.querySelector('button[type="submit"]');
+      const btnLabel = btn.textContent;
+
+      const fail = msg => {
+        errorEl.textContent = msg;
+        errorEl.classList.add('visible');
+      };
+
+      form.addEventListener('submit', async e => {
+        e.preventDefault();
+        errorEl.classList.remove('visible');
+        errorEl.textContent = '';
+
+        const email = input.value.trim();
+        // Validación propia: el mensaje nativo no se puede traducir ni estilar
+        if (!email) return fail('Escribe tu email.');
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+          return fail('Ese email no parece válido. Revísalo.');
+        }
+
+        btn.disabled = true;
+        btn.setAttribute('aria-busy', 'true');
+        btn.textContent = 'Enviando…';
+
+        try {
+          const res = await fetch(ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email,
+              empresa: form.querySelector('input[name="empresa"]').value,
+              origen: form.id === 'heroForm' ? 'hero' : 'cta'
+            })
+          });
+
+          if (res.ok) {
+            form.style.display = 'none';
+            successEl.style.display = 'block';
+            return;
+          }
+
+          const data = await res.json().catch(() => ({}));
+          if (res.status === 429) {
+            fail('Demasiados intentos. Espera un momento y vuelve a probar.');
+          } else {
+            fail(data.error || 'No hemos podido apuntarte. Inténtalo en un momento.');
+          }
+        } catch {
+          fail('Fallo de conexión. Comprueba tu red e inténtalo de nuevo.');
+        } finally {
+          btn.disabled = false;
+          btn.removeAttribute('aria-busy');
+          btn.textContent = btnLabel;
+        }
+      });
+    });
 
     // Scroll reveal
     const io = new IntersectionObserver(entries => {

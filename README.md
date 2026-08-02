@@ -49,10 +49,41 @@ npm run deploy
 assets. La CSP permite estilos y scripts en línea (la página los lleva
 incrustados) y las fuentes de Google. Verificada en navegador: sin violaciones.
 
+## Captación de emails
+
+Los dos formularios (hero y CTA) hacen `POST /api/subscribe`, resuelto por la
+Pages Function en `functions/api/subscribe.js`. El endpoint valida el email,
+descarta bots con un honeypot, limita a 5 altas por IP y hora, guarda el alta
+en KV y avisa por email a `info@steelbackfit.com`.
+
+El alta se guarda **antes** de intentar el aviso: si el proveedor de email
+falla, el lead no se pierde y quien se apunta no ve un error que no le compete.
+
+### Configuración en Cloudflare Pages
+
+Variables de entorno (Settings → Environment variables):
+
+| Variable         | Obligatoria | Descripción                                       |
+|------------------|-------------|---------------------------------------------------|
+| `RESEND_API_KEY` | sí          | Secreto de Resend. Márcala como **Encrypt**.      |
+| `NOTIFY_TO`      | no          | Destino del aviso. Por defecto `info@steelbackfit.com`. |
+| `NOTIFY_FROM`    | no          | Remitente verificado en Resend.                   |
+
+Binding de KV (Settings → Functions → KV namespace bindings): crea un namespace
+y bíndealo como **`LEADS`**. Sin él la landing sigue funcionando, pero sin
+persistencia ni rate limit: el aviso por email pasa a ser el único registro.
+
+### Pruebas en local
+
+```bash
+npx wrangler pages dev dist --kv LEADS
+curl -X POST localhost:8788/api/subscribe \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"prueba@steelbackfit.com","origen":"hero"}'
+```
+
 ## Pendiente
 
-- ⚠️ **Los formularios no envían nada.** `submitForm()` solo oculta el
-  formulario y muestra el mensaje de éxito; no hay ninguna petición de red. Hay
-  que conectarlos a un backend (Mailchimp, Formspree, un Worker…) antes de
-  meter tráfico.
 - Los enlaces sociales del footer y el logo apuntan a `href="#"`.
+- Sin `RESEND_API_KEY` configurada no sale ningún aviso por email; con `LEADS`
+  bindeado los registros quedan igualmente guardados en KV.
