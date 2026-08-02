@@ -1,0 +1,4 @@
+# La landing vive en /landing (servida desde landing.html, sin barra final).
+# No añadas una regla para /landing/ : Pages ya normaliza y una regla de
+# vuelta provoca un bucle infinito de redirecciones.
+/    /landing    301

@@ -1,89 +1,144 @@
 # Steelback — Landing
 
-Landing de captación de Steelback. Página estática autónoma: un solo
-`index.html` con el CSS y el JS en línea. Sin framework ni paso de compilación
-más allá de copiar los ficheros que se publican.
+Landing de captación de Steelback, publicada en **steelback.com/landing**.
+Página estática (un `index.html` con CSS y JS en línea) más dos Pages Functions
+para la captación de emails, con base de datos **Cloudflare D1**. Todo dentro
+del plan gratuito.
 
-## Desarrollo
+## Puesta en marcha (una sola vez)
 
-Abre `index.html` en el navegador, o levanta un servidor local:
+Los pasos 1–4 requieren tu cuenta de Cloudflare, así que los tienes que hacer tú.
 
-```bash
-npm run preview     # build + wrangler pages dev sobre dist/
-```
-
-## Build
-
-```bash
-npm run build       # copia los ficheros publicables a dist/
-```
-
-`scripts/build.mjs` usa una **whitelist deliberada**. `uploads/` contiene
-material interno de diseño (capturas de trabajo y la guía en PDF) que no debe
-publicarse en un CDN público, así que solo se copian los assets que la página
-usa de verdad. Si añades un asset nuevo, súmalo a `ASSETS` en ese script.
-
-## Despliegue en Cloudflare Pages
-
-**Opción A — Git (recomendada).** En el panel de Cloudflare:
-Workers & Pages → Create → Pages → Connect to Git → `Steelbackfit/steelback-landing`.
-
-| Ajuste                  | Valor           |
-|-------------------------|-----------------|
-| Build command           | `npm run build` |
-| Build output directory  | `dist`          |
-| Root directory          | `/`             |
-
-Cada push a `main` despliega solo.
-
-**Opción B — Subida directa.**
+### 1. Crear la base de datos D1
 
 ```bash
 npx wrangler login
-npm run deploy
+npx wrangler d1 create steelback-leads
 ```
 
-## Cabeceras
-
-`_headers` fija CSP, `X-Frame-Options`, `Referrer-Policy` y el cacheo de los
-assets. La CSP permite estilos y scripts en línea (la página los lleva
-incrustados) y las fuentes de Google. Verificada en navegador: sin violaciones.
-
-## Captación de emails
-
-Los dos formularios (hero y CTA) hacen `POST /api/subscribe`, resuelto por la
-Pages Function en `functions/api/subscribe.js`. El endpoint valida el email,
-descarta bots con un honeypot, limita a 5 altas por IP y hora, guarda el alta
-en KV y avisa por email a `info@steelbackfit.com`.
-
-El alta se guarda **antes** de intentar el aviso: si el proveedor de email
-falla, el lead no se pierde y quien se apunta no ve un error que no le compete.
-
-### Configuración en Cloudflare Pages
-
-Variables de entorno (Settings → Environment variables):
-
-| Variable         | Obligatoria | Descripción                                       |
-|------------------|-------------|---------------------------------------------------|
-| `RESEND_API_KEY` | sí          | Secreto de Resend. Márcala como **Encrypt**.      |
-| `NOTIFY_TO`      | no          | Destino del aviso. Por defecto `info@steelbackfit.com`. |
-| `NOTIFY_FROM`    | no          | Remitente verificado en Resend.                   |
-
-Binding de KV (Settings → Functions → KV namespace bindings): crea un namespace
-y bíndealo como **`LEADS`**. Sin él la landing sigue funcionando, pero sin
-persistencia ni rate limit: el aviso por email pasa a ser el único registro.
-
-### Pruebas en local
+Copia el `database_id` que devuelve y pégalo en `wrangler.toml`, sustituyendo
+`PON_AQUI_EL_ID_DE_TU_D1`. Luego crea las tablas:
 
 ```bash
-npx wrangler pages dev dist --kv LEADS
-curl -X POST localhost:8788/api/subscribe \
-  -H 'Content-Type: application/json' \
-  -d '{"email":"prueba@steelbackfit.com","origen":"hero"}'
+npm run db:remote      # aplica schema.sql sobre la D1 real
 ```
+
+### 2. Conectar el repo a Cloudflare Pages
+
+Dashboard → **Workers & Pages** → **Create** → pestaña **Pages** →
+**Connect to Git** → autoriza GitHub (dale acceso **solo** a este repositorio)
+→ elige `Steelbackfit/steelback-landing`.
+
+| Ajuste                 | Valor           |
+|------------------------|-----------------|
+| Project name           | `steelback-landing` |
+| Production branch      | `main`          |
+| Build command          | `npm run build` |
+| Build output directory | `dist`          |
+| Root directory         | `/`             |
+
+`npm run build` ejecuta **los tests antes de compilar**: si un test falla, el
+build falla y el despliegue no sale. Eso es lo que hace que solo se publique
+código con los tests en verde.
+
+> ⚠️ Al existir `wrangler.toml`, Pages lee de ahí los bindings e **ignora los
+> que configures en el panel**. El binding D1 `DB` ya está declarado en el
+> fichero; no lo dupliques en la interfaz.
+
+### 3. Secretos
+
+Pages → Settings → **Variables and Secrets**. Márcalos todos como **Secret**
+(cifrado), no como texto plano:
+
+| Variable         | Obligatoria | Para qué                                              |
+|------------------|-------------|-------------------------------------------------------|
+| `IP_SALT`        | **sí**      | Sal para hashear la IP. Cadena aleatoria larga.        |
+| `ADMIN_TOKEN`    | **sí**      | Token para consultar `/api/leads`.                     |
+| `RESEND_API_KEY` | no          | Aviso por email de cada alta.                          |
+| `NOTIFY_FROM`    | no          | Remitente verificado en Resend.                        |
+| `NOTIFY_TO`      | no          | Destino del aviso. Por defecto `info@steelbackfit.com`.|
+| `TURNSTILE_SECRET` | no        | Si está, se exige captcha de Cloudflare Turnstile.     |
+
+Genera los secretos con:
+
+```bash
+node -e "console.log(crypto.randomUUID().replace(/-/g,'') + crypto.randomUUID().replace(/-/g,''))"
+```
+
+Sin `IP_SALT` o `ADMIN_TOKEN` los endpoints devuelven 503 a propósito: fallan
+cerrados en vez de servir datos mal configurados.
+
+### 4. Dominio
+
+Proyecto → **Custom domains** → añade `steelback.com`. Si el dominio ya está en
+Cloudflare se resuelve en dos clics, con SSL y CDN automáticos.
+
+> La raíz `/` redirige a `/landing` con un 301. Si `steelback.com` ya sirve otra
+> web, **no** conectes el dominio raíz a este proyecto: usa un subdominio o una
+> regla de Worker para enrutar solo `/landing`.
+
+## Cómo ver los registros
+
+```bash
+# JSON
+curl -H "Authorization: Bearer $ADMIN_TOKEN" https://steelback.com/api/leads
+
+# CSV descargable
+curl -H "Authorization: Bearer $ADMIN_TOKEN" \
+     "https://steelback.com/api/leads?formato=csv" -o leads.csv
+
+# Directamente contra la base de datos
+npx wrangler d1 execute steelback-leads --remote \
+  --command "SELECT email, origen, fecha FROM leads ORDER BY fecha DESC"
+```
+
+Parámetros: `?formato=csv` y `?limite=N` (por defecto 200, máximo 1000).
+
+## Desarrollo
+
+```bash
+npm test              # 12 tests de validación, sin red
+npm run build         # tests + genera dist/
+npm run db:local      # crea las tablas en la D1 local
+npm run dev           # servidor local con D1 y bindings de prueba
+```
+
+## Arquitectura
+
+```
+index.html                 fuente de la landing (CSS y JS en línea)
+lib/validation.mjs         lógica pura: validación, hashing, CSV
+functions/api/subscribe.js POST /api/subscribe — alta
+functions/api/leads.js     GET  /api/leads     — consulta (token)
+schema.sql                 tablas de D1
+scripts/build.mjs          copia la whitelist a dist/
+test/                      node:test
+```
+
+**`dist/landing.html`, no `dist/landing/index.html`.** Con un `index.html`
+dentro de una carpeta, Pages normaliza `/landing` → `/landing/` con un 308, y
+cualquier regla que devuelva la barra final provoca un bucle infinito de
+redirecciones. Servido como `landing.html`, `/landing` responde 200 directo.
+
+**La whitelist del build es deliberada.** `uploads/` guarda material interno
+(capturas de trabajo y la guía en PDF, 5,5 MB). `.gitignore` no filtra lo que
+sube wrangler, así que desplegar el directorio raíz publicaría esa guía en un
+CDN público. El CI falla si aparece un PDF en `dist/`.
+
+## Seguridad
+
+- Validación de email en cliente y servidor; el servidor nunca confía en el cliente.
+- Honeypot: los bots reciben 200 y no se guarda nada, para no delatar la detección.
+- Rate limit de 5 altas por IP y hora, contra la propia D1.
+- La IP se guarda **hasheada con sal**, nunca en claro (RGPD).
+- `/api/leads` exige token y compara en tiempo constante; falla cerrado sin él.
+- El CSV neutraliza la inyección de fórmulas (un email que empiece por `=`
+  se ejecutaría al abrirlo en Excel).
+- CSP, HSTS, `X-Frame-Options: DENY` y `nosniff` en `_headers`.
+- Turnstile opcional: se activa solo con poner `TURNSTILE_SECRET`.
 
 ## Pendiente
 
 - Los enlaces sociales del footer y el logo apuntan a `href="#"`.
-- Sin `RESEND_API_KEY` configurada no sale ningún aviso por email; con `LEADS`
-  bindeado los registros quedan igualmente guardados en KV.
+- `HEAD /api/leads` responde 405 en vez de 200 sin cuerpo. Irrelevante para un
+  endpoint de administración, pero no es estrictamente correcto.

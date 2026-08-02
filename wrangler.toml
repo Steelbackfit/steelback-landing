@@ -1,0 +1,15 @@
+name = "steelback-landing"
+compatibility_date = "2026-08-02"
+pages_build_output_dir = "dist"
+
+# ⚠️ IMPORTANTE: al existir este fichero, Cloudflare Pages lee de aquí los
+# bindings y **ignora los configurados en el panel**. Los secretos (IP_SALT,
+# ADMIN_TOKEN, RESEND_API_KEY…) NO van aquí: se ponen en el panel como
+# variables cifradas, o con `wrangler pages secret put`.
+
+[[d1_databases]]
+binding = "DB"
+database_name = "steelback-leads"
+# Sustituye por el ID real que devuelve:
+#   npx wrangler d1 create steelback-leads
+database_id = "PON_AQUI_EL_ID_DE_TU_D1"

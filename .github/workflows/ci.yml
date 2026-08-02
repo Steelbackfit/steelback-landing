@@ -1,0 +1,43 @@
+name: CI
+
+# Cloudflare Pages ya ejecuta `npm run build` (que incluye los tests) en cada
+# despliegue. Esto duplica la comprobación en GitHub para que un PR se vea en
+# rojo antes de mergear, sin esperar al build de Pages.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Tests
+        run: npm test
+
+      - name: Build
+        run: npm run build:only
+
+      - name: La landing tiene que quedar en /landing
+        run: |
+          # landing.html, no landing/index.html: ver README (bucle de redirecciones)
+          test -f dist/landing.html
+          test ! -e dist/landing/index.html
+          test -f dist/_headers
+          test -f dist/_redirects
+          test -f dist/robots.txt
+
+      - name: No se publica material interno
+        run: |
+          if find dist -iname '*.pdf' -o -iname 'pasted-*' | grep -q .; then
+            echo "::error::Hay material interno en dist/"
+            find dist -iname '*.pdf' -o -iname 'pasted-*'
+            exit 1
+          fi
+          echo "dist/ limpio"

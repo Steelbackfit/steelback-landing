@@ -1,34 +1,48 @@
 /**
  * POST /api/subscribe — Cloudflare Pages Function
  *
- * Recoge los emails de la landing, los guarda y avisa a info@steelbackfit.com.
+ * Guarda el alta en la base de datos D1 y, si hay proveedor configurado,
+ * avisa por email.
  *
- * Variables de entorno (Pages → Settings → Environment variables):
- *   RESEND_API_KEY   secreto, obligatorio para el aviso por email
- *   NOTIFY_TO        destino del aviso (por defecto info@steelbackfit.com)
- *   NOTIFY_FROM      remitente verificado en Resend (p. ej. web@steelbackfit.com)
+ * Binding (Pages → Settings → Functions → D1 database bindings):
+ *   DB               base de datos D1 `steelback-leads`
  *
- * Binding opcional (Pages → Settings → Functions → KV namespace bindings):
- *   LEADS            KV donde se persiste cada alta
- *
- * El alta se guarda en KV ANTES de intentar el email: si el proveedor falla,
- * el lead no se pierde y la persona no ve un error por algo ajeno a ella.
+ * Variables de entorno:
+ *   IP_SALT            secreto. Sal para hashear la IP. Obligatoria.
+ *   TURNSTILE_SECRET   secreto, opcional. Si está, se verifica el captcha.
+ *   RESEND_API_KEY     secreto, opcional. Si está, se avisa por email.
+ *   NOTIFY_TO          opcional, por defecto info@steelbackfit.com
+ *   NOTIFY_FROM        opcional, remitente verificado en Resend
  */
 
+import {
+  validarAlta,
+  huellaIp,
+  MAX_BODY,
+  RATE_LIMIT,
+  RATE_WINDOW_MIN,
+} from '../../lib/validation.mjs';
+
 const NOTIFY_TO_DEFAULT = 'info@steelbackfit.com';
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const MAX_BODY = 2048;
-const RATE_LIMIT = 5; // altas por IP y ventana
-const RATE_WINDOW = 3600; // segundos
 
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': 'no-store',
+      // Las Functions no heredan las reglas de _headers, hay que ponerlo aquí
+      'X-Robots-Tag': 'noindex, nofollow',
+      'X-Content-Type-Options': 'nosniff',
+    },
   });
 
 export async function onRequestPost({ request, env }) {
-  // 1. Cuerpo acotado: no queremos parsear payloads arbitrariamente grandes
+  if (!env.DB) {
+    console.error('Falta el binding D1 "DB"');
+    return json({ error: 'Servicio no disponible.' }, 503);
+  }
+
   const raw = await request.text();
   if (raw.length > MAX_BODY) return json({ error: 'Petición demasiado grande.' }, 413);
 
@@ -39,54 +53,85 @@ export async function onRequestPost({ request, env }) {
     return json({ error: 'JSON inválido.' }, 400);
   }
 
-  // 2. Honeypot: si viene relleno es un bot. Devolvemos 200 a propósito
-  //    para no darle señal de que ha sido detectado.
-  if (data.empresa) return json({ ok: true });
+  const res = validarAlta(data);
+  // Bot detectado por honeypot: 200 sin guardar nada.
+  if (!res.ok && res.bot) return json({ ok: true });
+  if (!res.ok) return json({ error: res.error }, res.status);
 
-  // 3. Validación
-  const email = String(data.email || '').trim().toLowerCase();
-  if (!email || !EMAIL_RE.test(email) || email.length > 254) {
-    return json({ error: 'Email no válido.' }, 400);
+  const { email, origen } = res.alta;
+  const ip = request.headers.get('CF-Connecting-IP') || '0.0.0.0';
+  const ua = (request.headers.get('User-Agent') || '').slice(0, 255);
+
+  // Turnstile: solo si está configurado, para no romper si aún no lo has puesto
+  if (env.TURNSTILE_SECRET) {
+    const okCaptcha = await verificarTurnstile(data.captcha, ip, env.TURNSTILE_SECRET);
+    if (!okCaptcha) return json({ error: 'Verificación anti-bot fallida.' }, 403);
   }
 
-  const ip = request.headers.get('CF-Connecting-IP') || 'desconocida';
-  const origen = ['hero', 'cta'].includes(data.origen) ? data.origen : 'desconocido';
+  if (!env.IP_SALT) {
+    console.error('Falta IP_SALT');
+    return json({ error: 'Servicio no disponible.' }, 503);
+  }
+  const ipHash = await huellaIp(ip, env.IP_SALT);
+  const ahora = new Date();
+  const desde = new Date(ahora.getTime() - RATE_WINDOW_MIN * 60_000).toISOString();
 
-  // 4. Rate limit por IP (solo si hay KV; sin binding se omite)
-  if (env.LEADS) {
-    const key = `rl:${ip}`;
-    const hits = Number((await env.LEADS.get(key)) || 0);
-    if (hits >= RATE_LIMIT) {
+  try {
+    // Rate limit por IP dentro de la ventana
+    const { results: conteo } = await env.DB.prepare(
+      'SELECT COUNT(*) AS n FROM intentos WHERE ip_hash = ? AND fecha > ?'
+    ).bind(ipHash, desde).all();
+
+    if ((conteo?.[0]?.n ?? 0) >= RATE_LIMIT) {
       return json({ error: 'Demasiados intentos. Inténtalo más tarde.' }, 429);
     }
-    await env.LEADS.put(key, String(hits + 1), { expirationTtl: RATE_WINDOW });
-  }
 
-  // 5. Persistir el alta antes de notificar
-  const alta = { email, origen, ip, fecha: new Date().toISOString() };
-  if (env.LEADS) {
-    await env.LEADS.put(`lead:${email}`, JSON.stringify(alta));
-  }
-
-  // 6. Avisar. Si falla, lo registramos pero NO rompemos la respuesta:
-  //    el lead ya está guardado y el fallo es nuestro, no de quien se apunta.
-  try {
-    await notificar(alta, env);
+    await env.DB.batch([
+      env.DB.prepare('INSERT INTO intentos (ip_hash, fecha) VALUES (?, ?)')
+        .bind(ipHash, ahora.toISOString()),
+      // ON CONFLICT: apuntarse dos veces no es un error para quien lo hace,
+      // solo refrescamos el origen y no duplicamos la fila.
+      env.DB.prepare(
+        `INSERT INTO leads (email, origen, fecha, user_agent, ip_hash)
+         VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT(email) DO UPDATE SET origen = excluded.origen`
+      ).bind(email, origen, ahora.toISOString(), ua, ipHash),
+      // Limpieza oportunista de la ventana de rate limit
+      env.DB.prepare('DELETE FROM intentos WHERE fecha < ?').bind(desde),
+    ]);
   } catch (err) {
-    console.error('Fallo al notificar el alta', email, err);
-    if (!env.LEADS) {
-      // Sin KV y sin email no queda rastro: ahí sí hay que devolver error.
-      return json({ error: 'No hemos podido apuntarte. Inténtalo en un momento.' }, 502);
+    console.error('Fallo al guardar el alta', email, err);
+    return json({ error: 'No hemos podido apuntarte. Inténtalo en un momento.' }, 500);
+  }
+
+  // El alta ya está persistida: un fallo del email no debe romper la respuesta.
+  if (env.RESEND_API_KEY) {
+    try {
+      await notificar({ email, origen, fecha: ahora.toISOString() }, env);
+    } catch (err) {
+      console.error('Fallo al notificar el alta', email, err);
     }
   }
 
   return json({ ok: true });
 }
 
-async function notificar({ email, origen, fecha }, env) {
-  if (!env.RESEND_API_KEY) throw new Error('RESEND_API_KEY sin configurar');
+async function verificarTurnstile(token, ip, secret) {
+  if (!token) return false;
+  const body = new FormData();
+  body.append('secret', secret);
+  body.append('response', token);
+  body.append('remoteip', ip);
+  const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+    method: 'POST',
+    body,
+  });
+  const data = await r.json().catch(() => ({}));
+  return data.success === true;
+}
 
-  const res = await fetch('https://api.resend.com/emails', {
+async function notificar({ email, origen, fecha }, env) {
+  const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${env.RESEND_API_KEY}`,
@@ -97,22 +142,14 @@ async function notificar({ email, origen, fecha }, env) {
       to: [env.NOTIFY_TO || NOTIFY_TO_DEFAULT],
       reply_to: email,
       subject: `Nueva alta en la landing: ${email}`,
-      text: [
-        'Alguien se ha apuntado al acceso anticipado.',
-        '',
-        `Email:  ${email}`,
-        `Origen: formulario ${origen}`,
-        `Fecha:  ${fecha}`,
-      ].join('\n'),
+      text: `Email:  ${email}\nOrigen: formulario ${origen}\nFecha:  ${fecha}`,
     }),
   });
-
-  if (!res.ok) {
-    throw new Error(`Resend respondió ${res.status}: ${await res.text()}`);
-  }
+  if (!r.ok) throw new Error(`Resend respondió ${r.status}: ${await r.text()}`);
 }
-// Catch-all necesario: sin él, un GET a /api/subscribe NO da 405 — cae al
-// handler de assets estáticos y devuelve index.html con 200. Los handlers
-// por método tienen prioridad, así que POST sigue yendo a onRequestPost.
+
+// Sin este catch-all, un GET a /api/subscribe no da 405: cae al handler de
+// assets estáticos y devuelve la landing con 200. Los handlers por método
+// tienen prioridad, así que POST sigue yendo a onRequestPost.
 export const onRequest = ({ request }) =>
   json({ error: `Método ${request.method} no permitido.` }, 405);
