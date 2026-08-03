@@ -2,1549 +2,691 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Steelback — El esfuerzo lo pones tú. El sistema lo pone Steelback.</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Steelback — La app que sustituye a tu coach de nutrición</title>
+  <meta name="description" content="Steelback te dice qué comer y cómo entrenar, y ajusta tu plan cada semana según cómo progresas. Sin dietas tristes. Apúntate a la lista de espera.">
+  <meta name="theme-color" content="#060A16">
+  <link rel="canonical" href="https://landing.steelbackfit.com/">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Steelback — La app que sustituye a tu coach de nutrición">
+  <meta property="og:description" content="Conseguir el cuerpo que quieres no debería costarte tu relación con la comida.">
+  <meta property="og:locale" content="es_ES">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="icon" href="/assets/SIMBOLO.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700&family=REM:wght@300;400;500;600;700&display=swap">
 
   <style>
     :root {
       --bg: #060A16;
-      --bg2: #020712;
-      --blue: #0057FF;
-      --cyan: #00D4FF;
-      --green: #28C66F;
-      --text: #F8FAFC;
+      --bg-alt: #0A0F2C;
+      --text: #F0F4FF;
+      --text-soft: #DCE5F5;
       --text-mid: #A6BBE0;
       --text-low: #8298C1;
-      --card-bg: rgba(240,244,255,0.04);
-      --card-border: rgba(240,244,255,0.15);
-      --card-border-strong: rgba(240,244,255,0.22);
+      --text-dim: #6E819F;
+      --blue: #0057FF;
+      --blue-hi: #1667FF;
+      --blue-soft: #6E9BFF;
+      --error: #FF6B85;
+      --line: rgba(240,244,255,0.09);
+      --line-hi: rgba(240,244,255,0.16);
+      --surface: rgba(240,244,255,0.04);
+      --pad: 60px;
     }
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
 
     body {
+      margin: 0;
       background: var(--bg);
       color: var(--text);
-      font-family: 'Outfit', sans-serif;
-      font-size: 16px;
-      line-height: 1.6;
+      font-family: Outfit, system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
     }
+    a { color: var(--text); text-decoration: none; }
+    ::selection { background: var(--blue); color: var(--text); }
+    img, svg { display: block; max-width: 100%; }
+    :focus-visible { outline: 2px solid var(--blue-soft); outline-offset: 3px; border-radius: 6px; }
 
-    /* ── NAV ── */
-    nav {
-      position: fixed;
-      inset: 0 0 auto 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 20px 56px;
-      background: rgba(6,10,22,0.88);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--card-border);
-    }
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 11px;
-      text-decoration: none;
-      color: var(--text);
-    }
-    .logo-word {
-      font-size: 17px;
-      font-weight: 700;
-      letter-spacing: 0.18em;
-    }
-    .nav-cta {
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--blue);
-      border: 1px solid rgba(0,87,255,0.4);
-      padding: 9px 22px;
-      border-radius: 7px;
-      text-decoration: none;
-      transition: background 0.2s, border-color 0.2s;
-    }
-    .nav-cta:hover { background: rgba(0,87,255,0.1); border-color: var(--blue); }
+    .wrap { max-width: 1320px; margin: 0 auto; width: 100%; }
+    .glow { position: absolute; border-radius: 50%; filter: blur(40px); pointer-events: none; }
 
-    /* ── HERO ── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      height: 56px; padding: 0 34px; border: none; border-radius: 16px;
+      background: var(--blue); color: #F2F6FC;
+      font-family: inherit; font-size: 18px; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
+      box-shadow: 0 18px 44px rgba(0,87,255,0.34);
+      transition: background .18s ease, transform .18s ease;
+    }
+    .btn:hover { background: var(--blue-hi); color: #fff; }
+    .btn:active { transform: translateY(1px); }
+    .btn[disabled] { opacity: .6; cursor: progress; }
+
+    .btn-ghost {
+      display: inline-flex; align-items: center; justify-content: center;
+      height: 44px; padding: 0 22px; border-radius: 16px;
+      background: rgba(240,244,255,0.06); border: 1px solid rgba(240,244,255,0.14);
+      font-size: 14px; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; flex-shrink: 0;
+      transition: background .18s ease, border-color .18s ease;
+    }
+    .btn-ghost:hover { background: rgba(240,244,255,0.12); border-color: rgba(240,244,255,0.28); }
+
+    .eyebrow {
+      font-size: 13px; font-weight: 600; letter-spacing: 0.24em;
+      text-transform: uppercase; color: var(--blue);
+    }
+
+    /* ── 01 Hero ── */
     .hero {
-      min-height: 100vh;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      align-items: center;
-      padding: 130px 80px 80px;
-      gap: 72px;
-      position: relative;
-      overflow: hidden;
+      position: relative; min-height: 100vh;
+      padding: 40px var(--pad) 72px;
+      display: flex; flex-direction: column; overflow: hidden;
     }
-    .hero::before {
-      content: '';
-      position: absolute;
-      top: -240px; right: -120px;
-      width: 800px; height: 800px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(0,87,255,0.16) 0%, transparent 68%);
-      pointer-events: none;
-    }
-    /* min-width:0 anula el suelo min-content del grid-item, que si no
-       impide que la columna encoja por debajo del ancho del formulario */
-    .hero-content { position: relative; z-index: 2; min-width: 0; }
-    .hero-label {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--cyan);
-      margin-bottom: 24px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .hero-label::before {
-      content: '';
-      display: block;
-      width: 28px; height: 1px;
-      background: var(--cyan);
-    }
-    .hero-h1 {
-      font-size: clamp(36px, 4.2vw, 62px);
-      font-weight: 700;
-      line-height: 1.1;
-      letter-spacing: -0.025em;
-      color: var(--text);
-      margin-bottom: 24px;
-      text-wrap: pretty;
-    }
-    .hero-h1 em { font-style: normal; color: var(--blue); }
-    .hero-subtitle {
-      font-size: clamp(16px, 1.35vw, 20px);
-      line-height: 1.65;
-      color: var(--text-mid);
-      margin-bottom: 48px;
-      max-width: 480px;
-      text-wrap: pretty;
-    }
-    .email-form {
-      display: flex;
-      max-width: 500px;
-      border: 1px solid var(--card-border-strong);
-      border-radius: 11px;
-      overflow: hidden;
-      background: var(--card-bg);
-      backdrop-filter: blur(8px);
-      transition: border-color 0.2s;
-    }
-    .email-form:focus-within { border-color: rgba(0,87,255,0.65); }
+    .hero-top { position: relative; display: flex; align-items: flex-start; justify-content: space-between; gap: 40px; }
+    .brand { display: flex; flex-direction: column; gap: 10px; }
+    .brand svg { width: 196px; height: auto; }
+    .brand span { font-size: 13px; font-weight: 300; letter-spacing: 0.02em; color: var(--text-low); }
 
-    /* Honeypot: invisible para personas, rellenable por bots. Fuera del flujo
-       y del foco, sin display:none (algunos bots lo detectan). */
-    .hp-field {
-      position: absolute;
-      left: -9999px;
-      width: 1px;
-      height: 1px;
-      opacity: 0;
-      pointer-events: none;
+    .hero-body {
+      position: relative; flex: 1; display: flex; flex-wrap: wrap;
+      gap: 64px; align-items: center; justify-content: center; padding-top: 56px;
     }
-    .form-error {
-      display: none;
-      margin-top: 12px;
-      font-size: 14px;
-      color: #FF8A8A;
+    .hero-copy { flex: 1 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 34px; align-items: flex-start; }
+    .hero-copy h1 {
+      margin: 0; font-size: clamp(38px, 5.4vw, 76px); line-height: 0.96;
+      font-weight: 500; letter-spacing: -0.035em; text-wrap: pretty; max-width: 15ch;
     }
-    .form-error.visible { display: block; }
-    .email-btn[aria-busy="true"], .cta-btn[aria-busy="true"] {
-      opacity: 0.65;
-      cursor: progress;
-    }
-    .email-input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      outline: none;
-      padding: 17px 20px;
-      font-family: 'Outfit', sans-serif;
-      font-size: 16px;
-      color: var(--text);
-      min-width: 0;
-    }
-    .email-input::placeholder { color: var(--text-low); }
-    .email-btn {
-      background: var(--blue);
-      color: white;
-      border: none;
-      padding: 17px 26px;
-      font-family: 'Outfit', sans-serif;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.09em;
-      text-transform: uppercase;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.2s;
-      flex-shrink: 0;
-    }
-    .email-btn:hover { background: #0049DD; }
-    .form-note {
-      margin-top: 12px;
-      font-size: 13px;
-      color: var(--text-low);
-    }
-    .form-success {
-      display: none;
-      margin-top: 16px;
-      padding: 13px 20px;
-      border-radius: 9px;
-      background: rgba(40,198,111,0.1);
-      border: 1px solid rgba(40,198,111,0.3);
-      color: #28C66F;
-      font-size: 15px;
-      font-weight: 500;
-    }
+    .hero-copy p { margin: 0; font-size: clamp(18px, 2vw, 21px); line-height: 1.45; font-weight: 300; color: var(--text-mid); max-width: 46ch; }
 
-    /* ── PHONE MOCKUPS ── */
-    .hero-visual {
-      position: relative;
-      z-index: 2;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 640px;
-    }
-    .phone-wrap-main {
-      transform: perspective(1400px) rotateY(-8deg) rotateX(2deg);
-      z-index: 3;
-      position: relative;
-      filter: drop-shadow(0 60px 80px rgba(0,0,0,0.6)) drop-shadow(0 0 60px rgba(0,87,255,0.18));
-    }
-    .phone-wrap-secondary {
-      position: absolute;
-      right: -44px;
-      top: 48px;
-      transform: perspective(1400px) rotateY(-20deg) rotateX(4deg) scale(0.76);
-      z-index: 2;
-      opacity: 0.68;
-      filter: drop-shadow(0 40px 60px rgba(0,0,0,0.5));
-    }
-    .phone-wrap-tertiary {
-      position: absolute;
-      left: -44px;
-      top: 48px;
-      transform: perspective(1400px) rotateY(20deg) rotateX(4deg) scale(0.76);
-      z-index: 2;
-      opacity: 0.68;
-      filter: drop-shadow(0 40px 60px rgba(0,0,0,0.5));
-    }
-    .phone-frame {
-      width: 300px;
-      height: 626px;
-      border-radius: 58px;
-      background: linear-gradient(155deg, #3a3d45 0%, #1c1e24 12%, #0f1015 50%, #26282f 88%, #45484f 100%);
-      padding: 11px;
-      box-shadow:
-        inset 0 0 0 1.5px rgba(255,255,255,0.25),
-        inset 0 2px 3px rgba(255,255,255,0.18),
-        inset 0 -2px 4px rgba(0,0,0,0.6);
-      position: relative;
-    }
-    .phone-frame::before {
-      content: '';
-      position: absolute;
-      left: -3px; top: 108px;
-      width: 3px; height: 32px;
-      background: linear-gradient(180deg, #2a2c32, #16171b);
-      border-radius: 2px 0 0 2px;
-      box-shadow: -1px 0 2px rgba(0,0,0,0.4);
-    }
-    .phone-frame::after {
-      content: '';
-      position: absolute;
-      right: -3px; top: 150px;
-      width: 3px; height: 70px;
-      background: linear-gradient(180deg, #2a2c32, #16171b);
-      border-radius: 0 2px 2px 0;
-      box-shadow: 1px 0 2px rgba(0,0,0,0.4);
-    }
-    .phone-notch-btn {
-      position: absolute;
-      left: -3px; top: 78px;
-      width: 3px; height: 20px;
-      background: linear-gradient(180deg, #2a2c32, #16171b);
-      border-radius: 2px 0 0 2px;
-    }
-    .phone-screen-inset {
-      width: 100%;
-      height: 100%;
-      border-radius: 48px;
-      overflow: hidden;
-      position: relative;
-      background: #060A16;
-      box-shadow: inset 0 0 0 1px rgba(0,0,0,0.6);
-    }
-    .phone-island {
-      position: absolute;
-      top: 13px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 90px; height: 26px;
-      background: #000;
-      border-radius: 20px;
-      z-index: 10;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+    /* ── Maqueta de teléfono (recreada en CSS, sin imágenes) ── */
+    .phone-slot { flex: 0 0 400px; display: flex; justify-content: center; }
+    .phone {
+      position: relative; width: 340px; height: 700px; flex-shrink: 0;
+      border-radius: 52px; padding: 9px;
+      background: linear-gradient(160deg, #3A3F4A 0%, #14171E 38%, #0B0D12 62%, #33383F 100%);
+      box-shadow: 0 50px 110px rgba(0,0,0,0.62), 0 0 0 1px rgba(240,244,255,0.09);
     }
     .phone-screen {
-      position: absolute;
-      inset: 0;
-      background: #060A16;
-      overflow: hidden;
+      position: relative; width: 100%; height: 100%;
+      border-radius: 44px; overflow: hidden; background: var(--bg);
+      display: flex; flex-direction: column;
     }
-    .phone-glow {
-      position: absolute;
-      top: -148px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 280px; height: 280px;
-      border-radius: 50%;
-      background: #0057FF;
-      opacity: 0.38;
-      pointer-events: none;
+    .notch {
+      position: absolute; left: 50%; top: 11px; transform: translateX(-50%);
+      width: 104px; height: 30px; border-radius: 18px; background: #05070C; z-index: 3;
     }
-    .phone-status {
-      position: absolute;
-      top: 14px;
-      left: 0; right: 0;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 22px;
-      font-family: 'Inter', sans-serif;
-      font-size: 12px;
-      color: rgba(248,250,252,0.85);
-      z-index: 5;
+    .scr { padding: 54px 20px 20px; display: flex; flex-direction: column; gap: 14px; height: 100%; }
+    .scr-h { display: flex; align-items: baseline; justify-content: space-between; }
+    .scr-h b { font-size: 19px; font-weight: 600; letter-spacing: -0.01em; }
+    .scr-h i { font-style: normal; font-size: 11px; color: var(--text-dim); }
+    .ring-row { display: flex; align-items: center; gap: 16px; padding: 16px; border-radius: 18px; background: rgba(240,244,255,0.045); border: 1px solid var(--line); }
+    .ring { position: relative; width: 74px; height: 74px; flex-shrink: 0; }
+    .ring span { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; }
+    .ring span em { font-style: normal; font-size: 9px; font-weight: 400; color: var(--text-dim); }
+    .macros { flex: 1; display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+    .macro { display: flex; flex-direction: column; gap: 4px; }
+    .macro-t { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--text-low); }
+    .bar { height: 5px; border-radius: 3px; background: rgba(240,244,255,0.1); overflow: hidden; }
+    .bar i { display: block; height: 100%; border-radius: 3px; background: var(--blue); }
+    .meal { display: flex; align-items: center; gap: 11px; padding: 11px 13px; border-radius: 14px; background: rgba(240,244,255,0.035); border: 1px solid var(--line); }
+    .meal-ic { width: 30px; height: 30px; border-radius: 9px; background: rgba(0,87,255,0.16); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+    .meal-x { flex: 1; min-width: 0; }
+    .meal-x b { display: block; font-size: 12.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .meal-x span { font-size: 10.5px; color: var(--text-dim); }
+    .meal-k { font-size: 11.5px; font-weight: 600; color: var(--text-mid); flex-shrink: 0; }
+    .spark { margin-top: auto; padding: 14px; border-radius: 16px; background: rgba(240,244,255,0.035); border: 1px solid var(--line); }
+    .spark-t { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--text-low); margin-bottom: 8px; }
+    .spark-t b { color: #2ED47A; font-weight: 600; }
+    .tabbar { display: flex; justify-content: space-around; padding: 12px 0 16px; border-top: 1px solid var(--line); margin: 0 -20px -20px; }
+    .tabbar i { width: 20px; height: 20px; border-radius: 6px; background: rgba(240,244,255,0.14); }
+    .tabbar i:first-child { background: var(--blue); }
+
+    /* ── 02 Qué es ── */
+    .que { position: relative; padding: 150px var(--pad) 160px; border-top: 1px solid rgba(240,244,255,0.07); }
+    .que-in { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 44px; text-align: center; }
+    .que-lead { margin: 0; font-size: clamp(26px, 3.4vw, 46px); line-height: 1.18; font-weight: 400; letter-spacing: -0.02em; text-wrap: pretty; }
+    .que-box { width: 100%; padding: 40px 48px; border-radius: 24px; background: rgba(240,244,255,0.035); border: 1px solid var(--line); }
+    .que-box p { margin: 0; font-size: clamp(19px, 2.1vw, 27px); line-height: 1.34; font-weight: 300; text-wrap: pretty; color: var(--text-soft); }
+    .que-foot { margin: 0; font-size: 16px; line-height: 1.5; font-weight: 300; color: var(--text-low); }
+
+    /* ── 03 HAPO ── */
+    .hapo { position: relative; padding: 130px var(--pad) 160px; background: var(--bg-alt); overflow: hidden; }
+    .hapo-in { position: relative; display: flex; flex-direction: column; gap: 90px; }
+    .hapo-head { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+    .hapo-head h2 { margin: 0; font-size: clamp(56px, 8.4vw, 116px); line-height: 0.9; font-weight: 600; letter-spacing: -0.045em; }
+    .hapo-head .sub { font-family: REM, Outfit, sans-serif; font-size: clamp(15px, 2vw, 20px); font-weight: 300; letter-spacing: 0.06em; color: var(--text-low); }
+    .hapo-head p { margin: 18px 0 0; font-size: clamp(18px, 2.2vw, 22px); line-height: 1.45; font-weight: 300; color: var(--text-mid); max-width: 40ch; }
+
+    .hapo-grid { display: flex; flex-wrap: wrap; gap: 60px; align-items: center; justify-content: space-between; }
+
+    /* El ciclo: en escritorio es un círculo de 700px; en móvil, una lista. */
+    .cycle { position: relative; flex: 0 0 700px; width: 700px; height: 700px; max-width: 100%; }
+    .cycle svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .cycle-mid { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+    .cycle-mid span:last-child { font-size: 15px; font-weight: 300; color: var(--text-low); }
+    .step {
+      position: absolute; transform: translate(-50%,-50%); width: 212px;
+      padding: 20px 22px; border-radius: 20px; background: var(--bg-alt);
+      border: 1px solid var(--line-hi); display: flex; flex-direction: column; gap: 8px;
     }
-    .phone-status-r { display: flex; align-items: center; gap: 5px; }
-    .phone-content {
-      position: absolute;
-      top: 66px;
-      left: 0; right: 0; bottom: 0;
-      padding: 10px 15px 74px;
-      overflow: hidden;
-    }
-    .ph-header-label {
-      font-size: 11px;
-      color: var(--cyan);
-      font-weight: 500;
-      letter-spacing: 0.05em;
-      margin-bottom: 2px;
-    }
-    .ph-header-title {
-      font-size: 27px;
-      font-weight: 600;
-      color: var(--text);
-      letter-spacing: 0.02em;
-      margin-bottom: 12px;
-    }
-    /* app cards */
-    .ph-card {
-      background: rgba(240,244,255,0.05);
-      border: 1px solid rgba(240,244,255,0.14);
-      border-radius: 18px;
-      padding: 13px 14px;
-      margin-bottom: 10px;
-    }
-    .ph-card-label {
-      font-size: 9px;
-      font-weight: 600;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--text-low);
-      margin-bottom: 4px;
-    }
-    .ph-card-big {
-      font-size: 19px;
-      font-weight: 700;
-      color: var(--text);
-    }
-    .ph-card-sub {
-      font-size: 10px;
-      color: var(--text-low);
-      margin-top: 1px;
-    }
-    .ph-bar {
-      height: 5px;
-      border-radius: 3px;
-      background: rgba(0,87,255,0.18);
-      margin-top: 7px;
-      overflow: hidden;
-    }
-    .ph-bar-fill {
-      height: 100%;
-      border-radius: 3px;
-      background: #0057FF;
-    }
-    .ph-badge {
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
-      color: #F59E0B;
-      background: rgba(245,158,11,0.14);
-      padding: 2px 7px;
-      border-radius: 4px;
-    }
-    /* week dots */
-    .week-row {
-      display: flex;
-      gap: 5px;
-      margin-top: 8px;
-    }
-    .wd {
-      flex: 1;
-      height: 30px;
-      border-radius: 8px;
-      border: 1px solid rgba(240,244,255,0.12);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 9px;
-      font-weight: 600;
-      color: var(--text-low);
-    }
-    .wd.done { background: rgba(40,198,111,0.15); border-color: rgba(40,198,111,0.35); color: #28C66F; }
-    .wd.today { background: #0057FF; border-color: #0057FF; color: white; }
-    /* phone bottom nav */
-    .ph-nav {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 70px;
-      background: rgba(6,10,22,0.97);
-      border-top: 1px solid rgba(240,244,255,0.1);
-      display: flex;
-      align-items: center;
-      justify-content: space-around;
-      padding-bottom: 8px;
-    }
-    .ph-nav-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 3px;
-    }
-    .ph-nav-dot {
-      width: 24px; height: 3px;
-      border-radius: 2px;
-    }
-    .ph-home-bar {
-      position: absolute;
-      bottom: 6px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 88px; height: 4px;
-      border-radius: 2px;
-      background: rgba(255,255,255,0.2);
+    .step-n { font-family: REM, Outfit, sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 0.16em; color: var(--blue); }
+    .step b { font-size: 17px; font-weight: 600; line-height: 1.2; }
+    .step span:last-child { font-size: 13.5px; font-weight: 300; line-height: 1.4; color: var(--text-low); }
+    .step-1 { left: 350px; top: 100px; }
+    .step-2 { left: 600px; top: 350px; }
+    .step-3 { left: 350px; top: 600px; }
+    .step-4 { left: 100px; top: 350px; }
+    .cycle-tag {
+      position: absolute; left: 6px; top: 166px; white-space: nowrap;
+      padding: 6px 12px; border-radius: 999px;
+      background: rgba(0,87,255,0.16); border: 1px solid rgba(0,87,255,0.45);
+      font-family: REM, Outfit, sans-serif; font-size: 11px; font-weight: 500;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--blue-soft);
     }
 
-    /* ── SHARED SECTION TOKENS ── */
-    .section-label {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--blue);
-      margin-bottom: 16px;
-    }
-    .section-title {
-      font-size: clamp(30px, 3.4vw, 50px);
-      font-weight: 700;
-      letter-spacing: -0.025em;
-      color: var(--text);
-      line-height: 1.15;
-      margin-bottom: 20px;
-      text-wrap: pretty;
-    }
-    .section-body {
-      font-size: clamp(16px, 1.3vw, 19px);
-      line-height: 1.7;
-      color: var(--text-mid);
-      max-width: 580px;
-      text-wrap: pretty;
-    }
+    .hapo-phones { position: relative; flex: 1 1 420px; min-width: 320px; display: flex; justify-content: center; gap: 24px; }
+    .hapo-phones .phone { transform: scale(.62); transform-origin: top center; margin-bottom: -260px; }
+    .hapo-phones .phone:nth-child(2) { margin-top: 70px; }
 
-    /* ── WHY ── */
-    .why-section {
-      padding: 120px 80px;
-      border-top: 1px solid var(--card-border);
-      border-bottom: 1px solid var(--card-border);
-    }
-    .why-header { margin-bottom: 60px; }
-    .why-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-    }
-    .why-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 22px;
-      padding: 40px 34px;
-      transition: border-color 0.3s, background 0.3s;
-    }
-    .why-card:hover {
-      border-color: rgba(0,87,255,0.38);
-      background: rgba(0,87,255,0.04);
-    }
-    .why-num {
-      font-family: 'Inter', sans-serif;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.14em;
-      color: var(--blue);
-      margin-bottom: 24px;
-    }
-    .why-title {
-      font-size: 21px;
-      font-weight: 700;
-      color: var(--text);
-      line-height: 1.3;
-      margin-bottom: 14px;
-    }
-    .why-body {
-      font-size: 16px;
-      line-height: 1.75;
-      color: var(--text-mid);
-    }
+    .hapo-note { max-width: 1000px; padding: 44px 52px; border-radius: 24px; background: var(--surface); border: 1px solid rgba(240,244,255,0.1); }
+    .hapo-note p { margin: 0; font-size: clamp(18px, 2vw, 26px); line-height: 1.38; font-weight: 300; text-wrap: pretty; color: var(--text-soft); }
 
-    /* ── HAPO ── */
-    .hapo-section {
-      padding: 120px 80px;
-      background: var(--bg2);
-      border-bottom: 1px solid var(--card-border);
-      position: relative;
-      overflow: hidden;
+    /* ── 04 Gente como tú ── */
+    .gente { position: relative; padding: 140px 0 130px; }
+    .gente-head { padding: 0 var(--pad); display: flex; flex-direction: column; gap: 12px; }
+    .gente-head h2 { margin: 0; font-size: clamp(34px, 4.8vw, 64px); line-height: 1; font-weight: 500; letter-spacing: -0.035em; }
+    .gente-head span { font-size: 17px; font-weight: 300; color: var(--text-low); }
+    .rail {
+      margin-top: 56px; padding: 0 var(--pad) 26px;
+      overflow-x: auto; display: flex; gap: 24px;
+      scroll-snap-type: x mandatory; scroll-padding: 0 var(--pad);
     }
-    .hapo-section::before {
-      content: '';
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      width: 700px; height: 700px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(0,87,255,0.09) 0%, transparent 70%);
-      pointer-events: none;
+    .rail::-webkit-scrollbar { height: 6px; }
+    .rail::-webkit-scrollbar-track { background: rgba(240,244,255,0.06); border-radius: 3px; }
+    .rail::-webkit-scrollbar-thumb { background: rgba(240,244,255,0.22); border-radius: 3px; }
+    .tcard { flex: 0 0 auto; width: 316px; scroll-snap-align: start; display: flex; flex-direction: column; gap: 18px; margin: 0; }
+    .tcard-img, .tcard-ph {
+      width: 316px; height: 400px; border-radius: 20px; overflow: hidden;
+      border: 1px solid rgba(240,244,255,0.1); object-fit: cover; background: #171C2B;
     }
-    .hapo-inner {
-      max-width: 820px;
-      margin: 0 auto;
-      text-align: center;
-      position: relative;
-      z-index: 1;
+    .tcard-ph {
+      background: repeating-linear-gradient(135deg, #171C2B 0 9px, #1D2334 9px 18px);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 14px; color: #5C6F91;
     }
-    .hapo-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--cyan);
-      border: 1px solid rgba(0,212,255,0.28);
-      padding: 8px 18px;
-      border-radius: 100px;
-      margin-bottom: 32px;
-      background: rgba(0,212,255,0.06);
-    }
-    .hapo-title {
-      font-size: clamp(44px, 5.5vw, 76px);
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      color: var(--text);
-      margin-bottom: 24px;
-      line-height: 1.05;
-    }
-    .hapo-text {
-      font-size: clamp(17px, 1.4vw, 20px);
-      line-height: 1.75;
-      color: var(--text-mid);
-      margin-bottom: 72px;
-    }
-    .hapo-diagram {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0;
-    }
-    .hapo-sources {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .hapo-source-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 14px;
-      padding: 16px 18px;
-      text-align: left;
-      width: 172px;
-    }
-    .hapo-source-icon {
-      width: 36px; height: 36px;
-      border-radius: 10px;
-      background: rgba(0,87,255,0.14);
-      border: 1px solid rgba(0,87,255,0.22);
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .hapo-source-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 3px;
-    }
-    .hapo-source-desc {
-      font-size: 11px;
-      color: var(--text-low);
-      line-height: 1.4;
-    }
-    .hapo-arrow {
-      padding: 0 20px;
-      color: rgba(0,87,255,0.5);
-      display: flex;
-      align-items: center;
-    }
-    .hapo-engine {
-      background: rgba(0,87,255,0.12);
-      border: 1px solid rgba(0,87,255,0.42);
-      border-radius: 22px;
-      padding: 28px 32px;
-      text-align: center;
-      width: 172px;
-      box-shadow: 0 0 60px rgba(0,87,255,0.18);
-    }
-    .hapo-engine-name {
-      font-size: 32px;
-      font-weight: 800;
-      color: var(--text);
-      letter-spacing: -0.02em;
-    }
-    .hapo-engine-sub {
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--text-mid);
-      margin-top: 6px;
-    }
-    .hapo-dots {
-      display: flex;
-      gap: 5px;
-      justify-content: center;
-      margin-top: 14px;
-    }
-    .hapo-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: var(--blue);
-    }
-    .hapo-output-card {
-      background: rgba(40,198,111,0.07);
-      border: 1px solid rgba(40,198,111,0.24);
-      border-radius: 14px;
-      padding: 16px 18px;
-      text-align: left;
-      width: 172px;
-    }
-    .hapo-output-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: #28C66F;
-      margin-bottom: 3px;
-    }
-    .hapo-output-desc {
-      font-size: 11px;
-      color: var(--text-low);
-      line-height: 1.4;
-    }
-    .hapo-arrow-green { color: rgba(40,198,111,0.6); }
+    .tcard-ph svg { width: 34px; height: 34px; }
+    .tcard-ph span { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+    .tcard-label { margin: 0; font-size: 16px; letter-spacing: 0.01em; color: var(--text-mid); }
+    .gente-foot { margin: 40px auto 0; padding: 0 var(--pad); font-size: 13px; font-weight: 300; color: var(--text-dim); }
 
-    /* ── HOW IT WORKS ── */
-    .how-section {
-      padding: 120px 80px;
-      background: var(--bg);
-    }
-    .how-header {
-      margin-bottom: 80px;
-      max-width: 620px;
-    }
-    .steps-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 48px;
-    }
-    .step { display: flex; flex-direction: column; gap: 18px; }
-    .step-num {
-      font-family: 'Inter', sans-serif;
-      font-size: 52px;
-      font-weight: 700;
-      color: rgba(0,87,255,0.18);
-      line-height: 1;
-      letter-spacing: -0.04em;
-    }
-    .step-bar {
-      width: 36px; height: 2px;
-      background: var(--blue);
-    }
-    .step-title {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--text);
-      line-height: 1.3;
-    }
-    .step-body {
-      font-size: 16px;
-      line-height: 1.75;
-      color: var(--text-mid);
-    }
+    /* ── 05 Lista ── */
+    .lista { position: relative; padding: 150px var(--pad) 120px; background: var(--bg-alt); overflow: hidden; }
+    .lista-in { position: relative; max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 52px; text-align: center; }
+    .lista-in h2 { margin: 0; font-size: clamp(34px, 5.4vw, 72px); line-height: 1.02; font-weight: 500; letter-spacing: -0.035em; text-wrap: pretty; }
 
-    /* ── CTA SECTION ── */
-    .cta-section {
-      padding: 130px 80px;
-      background: var(--bg2);
-      border-top: 1px solid var(--card-border);
-      text-align: center;
+    .form-block { width: 100%; max-width: 620px; display: flex; flex-direction: column; gap: 20px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; text-align: left; }
+    .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); padding-left: 4px; }
+    .field input {
+      width: 100%; height: 56px; padding: 0 20px; border-radius: 16px;
+      border: 1px solid var(--line-hi); background: rgba(240,244,255,0.05);
+      color: var(--text); font-family: inherit; font-size: 17px; font-weight: 300; outline: none;
+      transition: border-color .16s ease, background .16s ease;
     }
-    .cta-inner { max-width: 580px; margin: 0 auto; }
-    .cta-title {
-      font-size: clamp(30px, 3.3vw, 46px);
-      font-weight: 700;
-      letter-spacing: -0.025em;
-      color: var(--text);
-      margin-bottom: 16px;
-      line-height: 1.15;
-    }
-    .cta-body {
-      font-size: clamp(16px, 1.3vw, 18px);
-      line-height: 1.7;
-      color: var(--text-mid);
-      margin-bottom: 48px;
-    }
-    .cta-form {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      max-width: 440px;
-      margin: 0 auto;
-    }
-    .cta-input {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border-strong);
-      border-radius: 11px;
-      padding: 17px 24px;
-      font-family: 'Outfit', sans-serif;
-      font-size: 16px;
-      color: var(--text);
-      outline: none;
-      transition: border-color 0.2s;
-      text-align: center;
-    }
-    .cta-input::placeholder { color: var(--text-low); }
-    .cta-input:focus { border-color: rgba(0,87,255,0.6); }
-    .cta-btn {
-      background: var(--blue);
-      color: white;
-      border: none;
-      border-radius: 11px;
-      padding: 17px 40px;
-      font-family: 'Outfit', sans-serif;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
-    }
-    .cta-btn:hover { background: #0049DD; }
-    .cta-btn:active { transform: scale(0.99); }
+    .field input::placeholder { color: #5C6F91; }
+    .field input:focus { border-color: var(--blue); background: rgba(0,87,255,0.08); }
+    .field input[aria-invalid="true"] { border-color: var(--error); }
+    .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 
-    /* ── FOOTER ── */
-    footer {
-      background: var(--bg2);
-      border-top: 1px solid var(--card-border);
-      padding: 44px 80px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .footer-logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      text-decoration: none;
-    }
-    .footer-logo-word {
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 0.18em;
-      color: rgba(248,250,252,0.45);
-    }
-    .footer-email {
-      font-size: 14px;
-      color: var(--text-low);
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-    .footer-email:hover { color: var(--text); }
-    .footer-social { display: flex; align-items: center; gap: 12px; }
-    .social-link {
-      width: 40px; height: 40px;
-      border-radius: 10px;
-      border: 1px solid var(--card-border);
-      color: var(--text-low);
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: border-color 0.2s, color 0.2s;
-    }
-    .social-link:hover { border-color: rgba(240,244,255,0.32); color: var(--text); }
+    .form-error { display: none; margin: 0; font-size: 14px; font-weight: 400; color: var(--error); text-align: left; }
+    .form-error.visible { display: block; }
+    .form-note { margin: 0; font-size: 15px; line-height: 1.55; font-weight: 300; text-wrap: pretty; color: var(--text-low); }
 
-    /* ── SCROLL ANIMATIONS ── */
-    .fade-up {
-      opacity: 0;
-      transform: translateY(28px);
-      transition: opacity 0.65s ease, transform 0.65s ease;
+    .pos-card {
+      width: 100%; max-width: 620px; padding: 30px 32px; border-radius: 24px;
+      background: var(--surface); border: 1px solid rgba(240,244,255,0.1);
+      display: flex; flex-direction: column; gap: 22px;
     }
-    .fade-up.visible { opacity: 1; transform: translateY(0); }
-    .fade-up:nth-child(2) { transition-delay: 0.1s; }
-    .fade-up:nth-child(3) { transition-delay: 0.2s; }
+    .pos-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; text-align: left; }
+    .pos-top > div { display: flex; flex-direction: column; gap: 6px; }
+    .pos-lab { font-size: 12px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-low); }
+    .pos-num { font-family: REM, Outfit, sans-serif; font-size: clamp(34px, 7vw, 46px); font-weight: 600; line-height: 1; letter-spacing: -0.02em; color: #41465A; }
+    .pos-num.on { color: var(--text); }
+    .pos-note { font-size: 13px; font-weight: 300; line-height: 1.4; text-align: right; max-width: 20ch; color: var(--text-dim); }
+    .pos-link { display: flex; gap: 10px; align-items: center; }
+    .pos-link > div {
+      flex: 1; min-width: 0; height: 46px; display: flex; align-items: center; padding: 0 16px;
+      border-radius: 14px; background: rgba(6,10,22,0.6); border: 1px solid rgba(240,244,255,0.1); overflow: hidden;
+    }
+    .pos-link code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-mid); }
+    .copy-btn {
+      height: 46px; padding: 0 20px; border: 1px solid var(--line-hi); border-radius: 14px;
+      background: rgba(240,244,255,0.06); color: var(--text); font-family: inherit;
+      font-size: 13px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase;
+      cursor: pointer; white-space: nowrap; transition: background .16s ease;
+    }
+    .copy-btn:hover:not([disabled]) { background: rgba(240,244,255,0.13); }
+    .copy-btn[disabled] { opacity: .45; cursor: not-allowed; }
 
-    /* ── SCREEN CAROUSEL ── */
-    .pscreen {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      transition: opacity 0.75s ease;
-      background: #060A16;
-      overflow: hidden;
-      pointer-events: none;
-      box-sizing: border-box;
-    }
-    .pscreen.active { opacity: 1; pointer-events: auto; }
-    .phone-content { overflow: hidden; }
-    .screen-dots {
-      position: absolute;
-      bottom: 74px;
-      left: 0; right: 0;
-      display: flex;
-      justify-content: center;
-      gap: 5px;
-      z-index: 20;
-      pointer-events: none;
-    }
-    .sdot {
-      width: 5px; height: 5px;
-      border-radius: 50%;
-      background: rgba(240,244,255,0.2);
-      transition: all 0.35s ease;
-      pointer-events: auto;
-      cursor: pointer;
-    }
-    .sdot.active {
-      background: rgba(240,244,255,0.75);
-      width: 14px;
-      border-radius: 3px;
-    }
+    footer { position: relative; margin: 120px auto 0; padding-top: 32px; border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+    footer svg { width: 128px; height: auto; opacity: .45; }
+    footer span { font-size: 13px; font-weight: 300; color: var(--text-dim); }
 
-    /* ── ANIMS ── */
-    @keyframes pulse-dot {
-      0%, 100% { opacity: 0.3; transform: scale(0.85); }
-      50% { opacity: 1; transform: scale(1.15); }
+    /* ── Responsive ── */
+    @media (max-width: 1100px) {
+      .cycle { flex: 1 1 100%; width: 100%; height: auto; }
+      .cycle svg, .cycle-mid, .cycle-tag { display: none; }
+      .cycle-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+      .step { position: static; transform: none; width: 100%; }
+      .hapo-phones { flex: 1 1 100%; }
     }
-    .hapo-dot:nth-child(1) { animation: pulse-dot 1.5s ease-in-out infinite; }
-    .hapo-dot:nth-child(2) { animation: pulse-dot 1.5s ease-in-out 0.25s infinite; }
-    .hapo-dot:nth-child(3) { animation: pulse-dot 1.5s ease-in-out 0.5s infinite; }
-
-    /* ── RESPONSIVE ── */
-    @media (max-width: 960px) {
-      nav { padding: 16px 24px; }
-      .hero {
-        grid-template-columns: 1fr;
-        padding: 110px 28px 60px;
-        min-height: auto;
-        gap: 56px;
-      }
-      .hero-visual { display: none; }
-      .why-section, .how-section, .hapo-section, .cta-section { padding: 80px 28px; }
-      .why-grid, .steps-grid { grid-template-columns: 1fr; gap: 16px; }
-      .hapo-diagram { flex-direction: column; gap: 16px; }
-      .hapo-arrow, .hapo-arrow.hapo-arrow-green { transform: rotate(90deg); }
-      .hapo-source-card, .hapo-engine, .hapo-output-card { width: 100%; max-width: 320px; }
-      .hapo-sources { width: 100%; max-width: 320px; margin: 0 auto; }
-      footer { flex-direction: column; gap: 24px; text-align: center; padding: 40px 28px; }
+    @media (max-width: 900px) {
+      :root { --pad: 28px; }
+      .hero { min-height: auto; padding-top: 32px; }
+      .hero-body { gap: 48px; padding-top: 40px; }
+      .que { padding: 100px var(--pad) 110px; }
+      .hapo { padding: 100px var(--pad) 110px; }
+      .hapo-in { gap: 60px; }
+      .gente { padding: 100px 0 90px; }
+      .lista { padding: 100px var(--pad) 90px; }
+      .que-box { padding: 30px 26px; }
+      .hapo-note { padding: 30px 26px; }
+      footer { margin-top: 80px; flex-direction: column; text-align: center; gap: 20px; }
     }
-
-    @media (max-width: 520px) {
-      nav { padding: 14px 18px; }
-      .logo-word { font-size: 15px; }
-      .nav-cta { font-size: 11px; padding: 9px 14px; }
-      .hero { padding: 96px 20px 56px; }
-      .why-section, .how-section, .hapo-section, .cta-section { padding: 64px 20px; }
-      /* en columna el botón conserva su ancho en vez de quedar aplastado */
-      .email-form, .cta-form { flex-direction: column; }
-      .email-btn, .cta-btn { width: 100%; }
-      footer { padding: 36px 20px; }
+    @media (max-width: 620px) {
+      .hero-top { flex-direction: column; gap: 22px; }
+      .brand svg { width: 158px; }
+      .phone-slot { flex: 1 1 100%; }
+      .phone { transform: scale(.86); transform-origin: top center; margin-bottom: -98px; }
+      .hapo-phones { gap: 0; }
+      .hapo-phones .phone:nth-child(2) { display: none; }
+      .grid { grid-template-columns: 1fr; }
+      .pos-card { padding: 24px 20px; }
+      .pos-top { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .pos-note { text-align: left; max-width: none; }
+      .pos-link { flex-direction: column; align-items: stretch; }
+      .copy-btn { width: 100%; }
+      .tcard, .tcard-img, .tcard-ph { width: 260px; }
+      .tcard-img, .tcard-ph { height: 330px; }
     }
   </style>
 </head>
 <body>
 
-  <!-- ═══════ NAV ═══════ -->
-  <nav>
-    <a href="#" class="logo">
-      <svg width="22" height="32" viewBox="0 0 89.7 129" fill="var(--blue)" xmlns="http://www.w3.org/2000/svg">
-        <polygon points="47.8,62.4 57.2,63.6 9.8,107.4 9.8,129 79.8,64.1 61.8,49.2"/>
-        <polygon points="9.8,64.9 27.9,79.8 41.9,66.6 32.5,65.4 79.8,21.6 79.8,0"/>
-      </svg>
-      <span class="logo-word">STEELBACK</span>
-    </a>
-    <a href="#cta" class="nav-cta">Acceso anticipado</a>
-  </nav>
+<!-- ═══════ 01 HERO ═══════ -->
+<section class="hero">
+  <div class="glow" style="left:-220px; top:-320px; width:900px; height:900px; background:radial-gradient(circle, rgba(0,87,255,.38) 0%, rgba(0,87,255,0) 62%);"></div>
+  <div class="glow" style="right:-280px; bottom:-420px; width:820px; height:820px; background:radial-gradient(circle, rgba(0,87,255,.16) 0%, rgba(0,87,255,0) 65%);"></div>
 
-  <!-- ═══════ HERO ═══════ -->
-  <section class="hero" id="hero">
-    <div class="hero-content">
-      <div class="hero-label">Sistema de prescripción adaptativa</div>
-      <h1 class="hero-h1">
-        El esfuerzo<br>
-        lo pones <em>tú</em>.<br>
-        El sistema lo pone<br>
-        <em>Steelback</em>.
-      </h1>
-      <p class="hero-subtitle">El primer sistema en español que ajusta tu entrenamiento y nutrición en base a cómo evoluciona tu cuerpo.</p>
-      <div>
-        <form class="email-form" id="heroForm" data-signup novalidate>
-          <input class="email-input" type="email" name="email" placeholder="tu@email.com" required autocomplete="email">
-          <input class="hp-field" type="text" name="empresa" tabindex="-1" autocomplete="off" aria-hidden="true">
-          <button class="email-btn" type="submit">Quiero acceso anticipado</button>
-        </form>
-        <p class="form-error" id="heroError" role="alert"></p>
-        <p class="form-note">La app está en desarrollo. Sin fecha de lanzamiento confirmada.</p>
-        <div class="form-success" id="heroSuccess" role="status">✓ Apuntado. Te avisamos cuando abramos acceso.</div>
-      </div>
+  <header class="hero-top wrap">
+    <div class="brand">
+      <svg viewBox="0 0 483.9 83.532" fill="none" role="img" aria-label="Steelback">
+        <g transform="matrix(1,0,0,-1,443.804,69.344)"><path d="M 26.492 0 L 11.13 20.178 L 11.13 0 L 0 0 L 0 45.693 L 11.13 45.693 L 11.13 25.646 L 26.362 45.693 L 39.445 45.693 L 21.74 23.302 L 40.096 0 L 26.492 0 Z" fill="#F0F4FF"/></g>
+        <g transform="matrix(1,0,0,-1,385.827,69.670)"><path d="M 0 23.237 C 0 27.75 0.976 31.764 2.929 35.279 C 4.882 38.837 7.594 41.593 11.065 43.545 C 14.58 45.542 18.551 46.54 22.977 46.54 C 28.401 46.54 33.044 45.108 36.906 42.244 C 40.768 39.38 43.35 35.474 44.652 30.527 L 32.415 30.527 C 31.504 32.437 30.202 33.89 28.51 34.888 C 26.861 35.887 24.973 36.386 22.847 36.386 C 19.419 36.386 16.641 35.192 14.515 32.806 C 12.389 30.419 11.326 27.229 11.326 23.237 C 11.326 19.245 12.389 16.056 14.515 13.669 C 16.641 11.282 19.419 10.089 22.847 10.089 C 24.973 10.089 26.861 10.588 28.51 11.586 C 30.202 12.584 31.504 14.038 32.415 15.947 L 44.652 15.947 C 43.35 11 40.768 7.095 36.906 4.231 C 33.044 1.41 28.401 0 22.977 0 C 18.551 0 14.58 0.976 11.065 2.929 C 7.594 4.925 4.882 7.681 2.929 11.196 C 0.976 14.71 0 18.724 0 23.237 Z" fill="#F0F4FF"/></g>
+        <g transform="matrix(1,0,0,-1,330.220,69.344)"><path d="M 31.439 8.071 L 14.385 8.071 L 11.651 0 L 0 0 L 16.533 45.693 L 29.421 45.693 L 45.954 0 L 34.172 0 L 31.439 8.071 Z M 28.575 16.663 L 22.912 33.391 L 17.314 16.663 L 28.575 16.663 Z" fill="#F0F4FF"/></g>
+        <g transform="matrix(1,0,0,-1,283.799,69.344)"><path d="M 27.663 23.433 C 30.31 22.868 32.437 21.545 34.042 19.462 C 35.648 17.423 36.451 15.079 36.451 12.432 C 36.451 8.614 35.105 5.576 32.415 3.32 C 29.768 1.107 26.058 0 21.285 0 L 0 0 L 0 45.693 L 20.569 45.693 C 25.212 45.693 28.835 44.63 31.439 42.504 C 34.086 40.378 35.409 37.492 35.409 33.847 C 35.409 31.157 34.693 28.922 33.261 27.143 C 31.873 25.364 30.007 24.127 27.663 23.433 Z M 11.13 27.208 L 18.421 27.208 C 20.243 27.208 21.632 27.598 22.586 28.379 C 23.584 29.204 24.083 30.397 24.083 31.959 C 24.083 33.522 23.584 34.715 22.586 35.539 C 21.632 36.364 20.243 36.776 18.421 36.776 L 11.13 36.776 L 11.13 27.208 Z M 19.332 8.982 C 21.198 8.982 22.63 9.395 23.628 10.219 C 24.669 11.087 25.19 12.324 25.19 13.929 C 25.19 15.535 24.648 16.793 23.563 17.705 C 22.521 18.616 21.068 19.071 19.202 19.071 L 11.13 19.071 L 11.13 8.982 L 19.332 8.982 Z" fill="#F0F4FF"/></g>
+        <g transform="matrix(1,0,0,-1,246.271,69.344)"><path d="M 11.13 8.592 L 25.711 8.592 L 25.711 0 L 0 0 L 0 45.693 L 11.13 45.693 L 11.13 8.592 Z" fill="#F0F4FF"/></g>
+        <g transform="matrix(1,0,0,-1,204.546,69.344)"><path d="M 11.13 36.776 L 11.13 27.533 L 26.036 27.533 L 26.036 18.941 L 11.13 18.941 L 11.13 8.917 L 27.989 8.917 L 27.989 0 L 0 0 L 0 45.693 L 27.989 45.693 L 27.989 36.776 L 11.13 36.776 Z" fill="#F0F4FF"/></g>
+        <g transform="matrix(1,0,0,-1,162.822,69.344)"><path d="M 11.13 36.776 L 11.13 27.533 L 26.036 27.533 L 26.036 18.941 L 11.13 18.941 L 11.13 8.917 L 27.989 8.917 L 27.989 0 L 0 0 L 0 45.693 L 27.989 45.693 L 27.989 36.776 L 11.13 36.776 Z" fill="#F0F4FF"/></g>
+        <g transform="matrix(1,0,0,-1,115.383,69.344)"><path d="M 35.344 45.693 L 35.344 36.776 L 23.237 36.776 L 23.237 0 L 12.107 0 L 12.107 36.776 L 0 36.776 L 0 45.693 L 35.344 45.693 Z" fill="#F0F4FF"/></g>
+        <g transform="matrix(1,0,0,-1,70,69.800)"><path d="M 17.835 0 C 14.493 0 11.499 0.542 8.852 1.627 C 6.205 2.712 4.079 4.318 2.473 6.444 C 0.911 8.57 0.087 11.13 0 14.125 L 11.846 14.125 C 12.02 12.432 12.606 11.13 13.604 10.219 C 14.602 9.351 15.904 8.917 17.509 8.917 C 19.158 8.917 20.46 9.286 21.415 10.024 C 22.369 10.805 22.847 11.868 22.847 13.213 C 22.847 14.342 22.456 15.275 21.675 16.012 C 20.937 16.75 20.004 17.357 18.876 17.835 C 17.791 18.312 16.229 18.855 14.19 19.462 C 11.239 20.373 8.831 21.285 6.965 22.196 C 5.099 23.107 3.493 24.452 2.148 26.231 C 0.803 28.011 0.13 30.332 0.13 33.196 C 0.13 37.449 1.671 40.768 4.752 43.155 C 7.833 45.585 11.846 46.8 16.793 46.8 C 21.827 46.8 25.884 45.585 28.965 43.155 C 32.046 40.768 33.695 37.427 33.912 33.131 L 21.87 33.131 C 21.784 34.606 21.241 35.756 20.243 36.581 C 19.245 37.449 17.965 37.883 16.403 37.883 C 15.058 37.883 13.973 37.514 13.148 36.776 C 12.324 36.082 11.912 35.062 11.912 33.717 C 11.912 32.241 12.606 31.092 13.994 30.267 C 15.383 29.443 17.553 28.553 20.503 27.598 C 23.454 26.6 25.841 25.646 27.663 24.734 C 29.529 23.823 31.135 22.5 32.48 20.764 C 33.825 19.028 34.498 16.793 34.498 14.06 C 34.498 11.456 33.825 9.091 32.48 6.965 C 31.178 4.838 29.269 3.146 26.752 1.888 C 24.235 0.629 21.263 0 17.835 0 Z" fill="#F0F4FF"/></g>
+        <g transform="matrix(1,0,0,-1,0,83.532)"><path d="M 30.809 48.876 C 29.321 47.505 27.259 45.605 26.228 44.654 C 25.19 43.695 24.445 42.895 24.557 42.858 C 24.668 42.822 25.511 42.714 26.431 42.618 C 27.35 42.521 28.667 42.359 29.356 42.258 L 30.61 42.074 L 30.234 41.77 C 30.027 41.602 28.89 40.553 27.707 39.439 C 26.523 38.324 25.125 37.028 24.6 36.559 C 24.074 36.09 23.286 35.373 22.848 34.966 C 22.411 34.559 19.831 32.195 17.116 29.713 C 14.402 27.231 11.571 24.614 10.827 23.899 C 8.793 21.945 1.841 15.415 0.86 14.537 L 0 13.767 L 0 6.854 C 0 0.78 0 0.893 0 0 C 3.762 3.305 0 0 3.762 3.305 C 11.503 10.405 16.872 15.355 17.992 16.426 C 19.853 18.203 28.369 26.136 31.578 29.079 C 36.767 33.839 42.79 39.399 43.932 40.483 L 45.272 41.755 L 44.11 42.701 C 42.992 43.612 41.715 44.676 36.242 49.255 C 34.851 50.418 33.668 51.37 33.614 51.37 C 33.561 51.369 32.298 50.247 30.809 48.876 Z" fill="#F0F4FF" fill-rule="evenodd"/></g>
+        <g transform="matrix(1,0,0,-1,0.062,52.224)"><path d="M 36.893 43.388 C 38.331 44.661 43.496 49.316 45.063 50.751 C 45.947 51.561 46.688 52.223 46.71 52.224 C 46.732 52.224 46.743 49.054 46.735 45.179 L 46.72 38.134 L 45.735 37.258 C 44.672 36.312 39.16 31.303 35.923 28.342 C 34.822 27.334 31.989 24.763 29.628 22.626 C 27.266 20.49 24.725 18.191 23.981 17.517 C 23.237 16.843 22.341 16.048 21.991 15.75 C 21.64 15.452 20.597 14.526 19.673 13.694 C 18.749 12.862 17.482 11.751 16.859 11.227 C 16.235 10.702 15.747 10.251 15.774 10.224 C 15.828 10.17 21.659 9.397 22.058 9.39 C 22.214 9.388 22.037 9.136 21.593 8.728 C 21.199 8.366 20.554 7.772 20.16 7.409 C 16.463 3.998 12.01 0 11.907 0 C 11.838 0 11.642 0.125 11.471 0.279 C 11.301 0.432 10.52 1.095 9.736 1.751 C 8.952 2.408 7.34 3.761 6.154 4.757 C 4.969 5.753 3.39 7.078 2.645 7.701 C 1.901 8.323 1.106 8.997 0.879 9.197 C 0.653 9.397 0.33 9.668 0.163 9.798 C -0.127 10.025 -0.097 10.077 0.814 10.924 C 1.34 11.412 2.386 12.361 3.139 13.031 C 3.892 13.702 5.791 15.392 7.358 16.788 C 8.926 18.184 10.996 20.048 11.96 20.932 C 12.923 21.815 14.074 22.858 14.518 23.25 C 14.961 23.642 17.147 25.604 19.374 27.61 C 21.601 29.616 23.674 31.482 23.981 31.757 C 24.471 32.196 28.629 35.946 34.336 41.094 C 35.347 42.006 36.497 43.038 36.893 43.388 Z" fill="#F0F4FF"/></g>
+      </svg>
+      <span>La app que sustituye a tu coach de nutrición.</span>
+    </div>
+    <a href="#lista" class="btn-ghost">Entrar en la lista</a>
+  </header>
+
+  <div class="hero-body wrap">
+    <div class="hero-copy">
+      <h1>Conseguir el cuerpo que quieres no debería costarte tu relación con la comida.</h1>
+      <p>La idea de que hay que sufrir y privarse para progresar es mentira.</p>
+      <a href="#lista" class="btn">Entrar en la lista</a>
     </div>
 
-    <div class="hero-visual" style="height:680px">
-      <!-- Tertiary phone — Progreso screen -->
-      <div class="phone-wrap-tertiary">
-        <div class="phone-frame" style="width:270px;height:580px">
-          <div class="phone-notch-btn"></div>
-          <div class="phone-screen-inset">
-          <div class="phone-screen">
-            <div class="phone-glow" style="opacity:0.25;top:-130px"></div>
-            <div class="phone-island"></div>
-            <div class="phone-status">
-              <span>9:41</span>
-              <div class="phone-status-r">
-                <svg width="15" height="10" viewBox="0 0 15 10" fill="rgba(248,250,252,0.8)"><rect x="0" y="4" width="3" height="6" rx="1"/><rect x="4" y="2" width="3" height="8" rx="1"/><rect x="8" y="0" width="3" height="10" rx="1"/></svg>
-                <svg width="22" height="11" viewBox="0 0 22 11" fill="none"><rect x="0" y="0.5" width="18" height="10" rx="3" stroke="rgba(248,250,252,0.8)" stroke-width="1.2"/><rect x="1.5" y="2" width="14" height="7" rx="2" fill="rgba(248,250,252,0.8)"/><rect x="19" y="3.5" width="3" height="4" rx="1.5" fill="rgba(248,250,252,0.4)"/></svg>
-              </div>
-            </div>
-            <div class="phone-content">
-              <div class="pscreen active" style="padding:10px 14px 70px">
-              <!-- Header centered -->
-              <div style="text-align:center;margin-bottom:14px">
-                <div style="font-size:17px;font-weight:700;color:#F8FAFC">Progreso</div>
-              </div>
-              <!-- Green highlight card -->
-              <div style="background:rgba(40,198,111,0.1);border:1px solid rgba(40,198,111,0.25);border-radius:16px;padding:14px;margin-bottom:12px">
-                <div style="font-size:10px;color:#A6BBE0;margin-bottom:4px">Este mes tienes</div>
-                <div style="font-size:22px;font-weight:700;color:#28C66F;letter-spacing:-0.01em">+20% más fuerza</div>
-              </div>
-              <!-- Rendimiento section -->
-              <div style="margin-bottom:8px">
-                <div style="font-size:14px;font-weight:700;color:#F8FAFC;margin-bottom:2px">Rendimiento y Marcas</div>
-                <div style="font-size:10px;color:#8298C1">Evolución durante la última semana</div>
-              </div>
-              <!-- Chart card -->
-              <div class="ph-card" style="padding:12px 14px">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-                  <div style="font-size:10px;color:#A6BBE0;display:flex;align-items:center;gap:5px">
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#A6BBE0" stroke-width="1.2"><polyline points="0,8 3,5 5,6 8,2"/></svg>
-                    Tendencia de Fuerza
-                  </div>
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#8298C1" stroke-width="1.2"><path d="M2 4 L6 8 L10 4"/></svg>
-                </div>
-                <div style="margin-bottom:10px">
-                  <span style="font-size:20px;font-weight:700;color:#F8FAFC">120kg</span>
-                  <span style="font-size:12px;font-weight:600;color:#28C66F;margin-left:6px">+20%</span>
-                </div>
-                <!-- Simple line chart -->
-                <svg viewBox="0 0 220 70" width="100%" height="60" style="overflow:visible">
-                  <defs>
-                    <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stop-color="#0057FF" stop-opacity="0.2"/>
-                      <stop offset="100%" stop-color="#0057FF" stop-opacity="0"/>
-                    </linearGradient>
-                  </defs>
-                  <!-- Grid lines -->
-                  <line x1="0" y1="60" x2="220" y2="60" stroke="rgba(240,244,255,0.08)" stroke-width="1"/>
-                  <line x1="0" y1="40" x2="220" y2="40" stroke="rgba(240,244,255,0.06)" stroke-width="1"/>
-                  <line x1="0" y1="20" x2="220" y2="20" stroke="rgba(240,244,255,0.06)" stroke-width="1"/>
-                  <!-- Fill area -->
-                  <path d="M10,50 L55,36 L100,38 L145,28 L190,14 L190,60 L10,60 Z" fill="url(#chartGrad)"/>
-                  <!-- Line -->
-                  <polyline points="10,50 55,36 100,38 145,28 190,14" fill="none" stroke="#0057FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <!-- Dots -->
-                  <circle cx="10" cy="50" r="3" fill="#0057FF"/>
-                  <circle cx="55" cy="36" r="3" fill="#0057FF"/>
-                  <circle cx="100" cy="38" r="3" fill="#0057FF"/>
-                  <circle cx="145" cy="28" r="3" fill="#0057FF"/>
-                  <circle cx="190" cy="14" r="4" fill="#0057FF" stroke="rgba(0,87,255,0.3)" stroke-width="4"/>
-                  <!-- Labels -->
-                  <text x="10" y="72" font-size="8" fill="#8298C1" text-anchor="middle" font-family="Outfit">S1</text>
-                  <text x="55" y="72" font-size="8" fill="#8298C1" text-anchor="middle" font-family="Outfit">S2</text>
-                  <text x="100" y="72" font-size="8" fill="#8298C1" text-anchor="middle" font-family="Outfit">S3</text>
-                  <text x="145" y="72" font-size="8" fill="#8298C1" text-anchor="middle" font-family="Outfit">S4</text>
-                  <text x="190" y="72" font-size="8" fill="#8298C1" text-anchor="middle" font-family="Outfit">S5</text>
+    <div class="phone-slot">
+      <div class="phone">
+        <div class="notch"></div>
+        <div class="phone-screen">
+          <div class="scr">
+            <div class="scr-h"><b>Hoy</b><i>Semana 6 · Definición</i></div>
+            <div class="ring-row">
+              <div class="ring">
+                <svg viewBox="0 0 74 74" aria-hidden="true">
+                  <circle cx="37" cy="37" r="32" fill="none" stroke="rgba(240,244,255,.1)" stroke-width="7"/>
+                  <circle cx="37" cy="37" r="32" fill="none" stroke="#0057FF" stroke-width="7" stroke-linecap="round" stroke-dasharray="201" stroke-dashoffset="52" transform="rotate(-90 37 37)"/>
                 </svg>
+                <span>1740<em>de 2180 kcal</em></span>
               </div>
-              </div>
-              <div class="pscreen" style="padding:10px 14px 70px">
-                <div style="text-align:center;margin-bottom:14px">
-                  <div style="font-size:17px;font-weight:700;color:#F8FAFC">Galería de fotos</div>
-                </div>
-                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
-                  <div style="aspect-ratio:1;border-radius:10px;background:linear-gradient(135deg,rgba(0,87,255,0.28),rgba(0,212,255,0.12))"></div>
-                  <div style="aspect-ratio:1;border-radius:10px;background:linear-gradient(135deg,rgba(40,198,111,0.24),rgba(0,87,255,0.1))"></div>
-                  <div style="aspect-ratio:1;border-radius:10px;background:rgba(240,244,255,0.06);border:1px solid rgba(240,244,255,0.12)"></div>
-                  <div style="aspect-ratio:1;border-radius:10px;background:rgba(240,244,255,0.06);border:1px solid rgba(240,244,255,0.12)"></div>
-                  <div style="aspect-ratio:1;border-radius:10px;background:linear-gradient(135deg,rgba(0,87,255,0.2),rgba(40,198,111,0.14))"></div>
-                  <div style="aspect-ratio:1;border-radius:10px;background:rgba(240,244,255,0.06);border:1px solid rgba(240,244,255,0.12)"></div>
-                  <div style="aspect-ratio:1;border-radius:10px;background:rgba(240,244,255,0.06);border:1px solid rgba(240,244,255,0.12)"></div>
-                  <div style="aspect-ratio:1;border-radius:10px;background:linear-gradient(135deg,rgba(245,158,11,0.18),rgba(0,87,255,0.1))"></div>
-                  <div style="aspect-ratio:1;border-radius:10px;background:rgba(240,244,255,0.06);border:1px solid rgba(240,244,255,0.12)"></div>
-                </div>
-                <div style="font-size:9px;color:#8298C1;text-align:center;margin-top:12px">Registro visual privado · solo tú lo ves</div>
+              <div class="macros">
+                <div class="macro"><div class="macro-t"><span>Proteína</span><span>142 / 165 g</span></div><div class="bar"><i style="width:86%"></i></div></div>
+                <div class="macro"><div class="macro-t"><span>Carbos</span><span>168 / 220 g</span></div><div class="bar"><i style="width:76%"></i></div></div>
+                <div class="macro"><div class="macro-t"><span>Grasas</span><span>52 / 68 g</span></div><div class="bar"><i style="width:64%"></i></div></div>
               </div>
             </div>
-            <div class="screen-dots"><div class="sdot active"></div><div class="sdot"></div></div>
-            <!-- Bottom nav — folder active (4th) -->
-            <div class="ph-nav">
-              <div class="ph-nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8298C1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="15" cy="5" r="2" fill="#8298C1" stroke="none"/><path d="M9 21l2-7-3-3.5 4-3.5 4 2.5 3.5-2"/><path d="M6.5 21l3-7"/></svg></div>
-              <div class="ph-nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8298C1" stroke-width="1.8" stroke-linecap="round"><path d="M12 3c-4 0-7 3.5-7 7.5 0 1 .2 2 .5 2.8L4 19l5.5-1.5c.7.3 1.6.5 2.5.5 4 0 7-3.1 7-7S16 3 12 3z"/></svg></div>
-              <div class="ph-nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8298C1" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
-              <div class="ph-nav-item" style="background:rgba(240,244,255,0.1);border-radius:20px;padding:5px 10px">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F8FAFC" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h3l2 3H3V7z"/><path d="M3 10h18v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V10z"/></svg>
-              </div>
-              <div class="ph-nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8298C1" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="13" width="20" height="8" rx="3"/><path d="M6 13V10a6 6 0 0 1 12 0v3"/><circle cx="8" cy="17" r="1.5" fill="#8298C1" stroke="none"/><circle cx="16" cy="17" r="1.5" fill="#8298C1" stroke="none"/></svg></div>
+            <div class="meal"><div class="meal-ic">🍳</div><div class="meal-x"><b>Desayuno</b><span>Tortilla y avena</span></div><div class="meal-k">480 kcal</div></div>
+            <div class="meal"><div class="meal-ic">🥗</div><div class="meal-x"><b>Comida</b><span>Pollo, arroz y aguacate</span></div><div class="meal-k">720 kcal</div></div>
+            <div class="meal"><div class="meal-ic">🍕</div><div class="meal-x"><b>Cena libre</b><span>Ajustada a tu semana</span></div><div class="meal-k">540 kcal</div></div>
+            <div class="spark">
+              <div class="spark-t"><span>Peso · 6 semanas</span><b>−3,4 kg</b></div>
+              <svg viewBox="0 0 260 52" preserveAspectRatio="none" style="width:100%;height:52px" aria-hidden="true">
+                <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0057FF" stop-opacity=".45"/><stop offset="1" stop-color="#0057FF" stop-opacity="0"/></linearGradient></defs>
+                <path d="M0 10 L43 16 L86 13 L130 24 L173 30 L216 34 L260 42 L260 52 L0 52 Z" fill="url(#sg)"/>
+                <path d="M0 10 L43 16 L86 13 L130 24 L173 30 L216 34 L260 42" fill="none" stroke="#4D8BFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
             </div>
-            <div class="ph-home-bar"></div>
-          </div>
+            <div class="tabbar"><i></i><i></i><i></i><i></i></div>
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</section>
 
-      <!-- Secondary phone — Nutrición screen -->
-      <div class="phone-wrap-secondary">
-        <div class="phone-frame" style="width:270px;height:580px">
-          <div class="phone-notch-btn"></div>
-          <div class="phone-screen-inset">
+<!-- ═══════ 02 QUÉ ES ═══════ -->
+<section class="que">
+  <div class="que-in">
+    <span class="eyebrow">Qué es Steelback</span>
+    <p class="que-lead">Steelback te dice qué comer y cómo entrenar para conseguir tu objetivo, y ajusta tu plan cada semana según cómo progresas.</p>
+    <div class="que-box">
+      <p>Y sin dietas tristes. En tu plan caben la pizza del sábado, la cerveza con amigos y la comida que de verdad te gusta — porque un plan que no puedes sostener no sirve de nada.</p>
+    </div>
+    <p class="que-foot">Como un coach que revisa tus números cada domingo. Dentro de una app.</p>
+  </div>
+</section>
+
+<!-- ═══════ 03 HAPO ═══════ -->
+<section class="hapo">
+  <div class="glow" style="left:50%; top:-300px; transform:translateX(-50%); width:1100px; height:700px; background:radial-gradient(circle, rgba(0,87,255,.22) 0%, rgba(0,87,255,0) 66%);"></div>
+
+  <div class="hapo-in wrap">
+    <div class="hapo-head">
+      <h2>HAPO</h2>
+      <span class="sub">Hybrid Adaptive Plan Optimizer</span>
+      <p>El motor de Steelback. Cada semana analiza cómo progresas y recalibra tu plan.</p>
+    </div>
+
+    <div class="hapo-grid">
+      <div class="cycle">
+        <svg viewBox="0 0 700 700" aria-hidden="true">
+          <circle cx="350" cy="350" r="250" fill="none" stroke="rgba(0,87,255,.55)" stroke-width="1.5" stroke-dasharray="5 11" stroke-linecap="round"/>
+          <g transform="translate(526.8 526.8) rotate(135)"><path d="M -8 -7 L 8 0 L -8 7 Z" fill="#0057FF"/></g>
+          <g transform="translate(173.2 526.8) rotate(225)"><path d="M -8 -7 L 8 0 L -8 7 Z" fill="#0057FF"/></g>
+          <g transform="translate(173.2 173.2) rotate(315)"><path d="M -8 -7 L 8 0 L -8 7 Z" fill="#0057FF"/></g>
+          <g transform="translate(526.8 173.2) rotate(45)"><path d="M -8 -7 L 8 0 L -8 7 Z" fill="#0057FF"/></g>
+        </svg>
+        <div class="cycle-mid">
+          <span class="eyebrow">Ciclo semanal</span>
+          <span>Se repite cada semana</span>
+        </div>
+        <div class="cycle-steps">
+          <div class="step step-1"><span class="step-n">01</span><b>Registras tu progreso</b><span>Peso, cintura, fuerza y adherencia. Una vez por semana.</span></div>
+          <div class="step step-2"><span class="step-n">02</span><b>HAPO lo analiza</b><span>Cruza tus datos y detecta cómo responde tu cuerpo.</span></div>
+          <div class="step step-3"><span class="step-n">03</span><b>Recalibra tu plan</b><span>Ajusta qué comes según lo que necesitas ahora.</span></div>
+          <div class="step step-4"><span class="step-n">04</span><b>Sigues progresando</b><span>Y a la semana siguiente, vuelve a empezar.</span></div>
+        </div>
+        <span class="cycle-tag">Vuelve a empezar</span>
+      </div>
+
+      <div class="hapo-phones">
+        <div class="phone">
+          <div class="notch"></div>
           <div class="phone-screen">
-            <div class="phone-glow" style="background:#0057FF;opacity:0.28;top:-120px"></div>
-            <div class="phone-island"></div>
-            <div class="phone-status">
-              <span>9:41</span>
-              <div class="phone-status-r">
-                <svg width="15" height="10" viewBox="0 0 15 10" fill="rgba(248,250,252,0.8)"><rect x="0" y="4" width="3" height="6" rx="1"/><rect x="4" y="2" width="3" height="8" rx="1"/><rect x="8" y="0" width="3" height="10" rx="1"/><rect x="12" y="0" width="3" height="10" rx="1" opacity="0.3"/></svg>
-                <svg width="22" height="11" viewBox="0 0 22 11" fill="none"><rect x="0" y="0.5" width="18" height="10" rx="3" stroke="rgba(248,250,252,0.8)" stroke-width="1.2"/><rect x="1.5" y="2" width="12" height="7" rx="2" fill="rgba(248,250,252,0.8)"/><rect x="19" y="3.5" width="3" height="4" rx="1.5" fill="rgba(248,250,252,0.4)"/></svg>
+            <div class="scr">
+              <div class="scr-h"><b>Progreso</b><i>Domingo</i></div>
+              <div class="ring-row" style="flex-direction:column; align-items:stretch; gap:12px">
+                <div class="macro"><div class="macro-t"><span>Peso</span><span>78,6 kg</span></div><div class="bar"><i style="width:72%"></i></div></div>
+                <div class="macro"><div class="macro-t"><span>Cintura</span><span>84 cm</span></div><div class="bar"><i style="width:58%"></i></div></div>
+                <div class="macro"><div class="macro-t"><span>Adherencia</span><span>92 %</span></div><div class="bar"><i style="width:92%"></i></div></div>
               </div>
+              <div class="meal"><div class="meal-ic">📈</div><div class="meal-x"><b>Press banca</b><span>4×8 · +2,5 kg</span></div><div class="meal-k">80 kg</div></div>
+              <div class="meal"><div class="meal-ic">🦵</div><div class="meal-x"><b>Sentadilla</b><span>4×6 · +5 kg</span></div><div class="meal-k">110 kg</div></div>
+              <div class="spark">
+                <div class="spark-t"><span>HAPO recalibra</span><b>+120 kcal</b></div>
+                <p style="margin:0;font-size:11.5px;line-height:1.45;color:var(--text-low)">Progresas por encima de lo previsto. Subimos carbohidratos para sostener la fuerza.</p>
+              </div>
+              <div class="tabbar"><i></i><i></i><i></i><i></i></div>
             </div>
-            <div class="phone-content">
-              <div class="pscreen active" style="padding:6px 14px 70px">
-              <!-- Macro summary card -->
-              <div class="ph-card" style="display:flex;align-items:center;gap:14px;padding:14px;margin-bottom:10px">
-                <!-- Ring -->
-                <div style="position:relative;width:68px;height:68px;flex-shrink:0">
-                  <svg viewBox="0 0 68 68" width="68" height="68">
-                    <circle cx="34" cy="34" r="28" fill="none" stroke="rgba(240,244,255,0.08)" stroke-width="8"/>
-                    <circle cx="34" cy="34" r="28" fill="none" stroke="#28C66F" stroke-width="8" stroke-dasharray="106 70" stroke-dashoffset="0" stroke-linecap="round" transform="rotate(-90 34 34)"/>
-                    <circle cx="34" cy="34" r="28" fill="none" stroke="#E55353" stroke-width="8" stroke-dasharray="40 136" stroke-dashoffset="-106" stroke-linecap="round" transform="rotate(-90 34 34)"/>
-                    <circle cx="34" cy="34" r="28" fill="none" stroke="#F59E0B" stroke-width="8" stroke-dasharray="25 151" stroke-dashoffset="-146" stroke-linecap="round" transform="rotate(-90 34 34)"/>
-                  </svg>
-                  <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
-                    <div style="font-size:13px;font-weight:700;color:#F8FAFC;line-height:1.1">1200</div>
-                    <div style="font-size:7px;color:#8298C1;text-align:center;line-height:1.2">kcal<br>restantes</div>
-                  </div>
-                </div>
-                <!-- Macro bars -->
-                <div style="flex:1;display:flex;flex-direction:column;gap:6px">
-                  <div>
-                    <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px"><span style="color:#F8FAFC;font-weight:500">Proteína</span><span style="color:#8298C1">64 / 180g</span></div>
-                    <div style="height:4px;border-radius:2px;background:rgba(240,244,255,0.08);overflow:hidden"><div style="width:36%;height:100%;background:#E55353;border-radius:2px"></div></div>
-                  </div>
-                  <div>
-                    <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px"><span style="color:#F8FAFC;font-weight:500">Carbohidratos</span><span style="color:#8298C1">80 / 280g</span></div>
-                    <div style="height:4px;border-radius:2px;background:rgba(240,244,255,0.08);overflow:hidden"><div style="width:29%;height:100%;background:#F59E0B;border-radius:2px"></div></div>
-                  </div>
-                  <div>
-                    <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px"><span style="color:#F8FAFC;font-weight:500">Grasas</span><span style="color:#8298C1">32 / 70g</span></div>
-                    <div style="height:4px;border-radius:2px;background:rgba(240,244,255,0.08);overflow:hidden"><div style="width:46%;height:100%;background:#0057FF;border-radius:2px"></div></div>
-                  </div>
-                  <div style="font-size:10px;color:#A6BBE0;margin-top:2px">Objetivo diario: <span style="color:#F8FAFC;font-weight:600">2.400 kcal</span></div>
-                </div>
-              </div>
-              <!-- Section header -->
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
-                <div style="font-size:14px;font-weight:700;color:#F8FAFC">Comidas del día</div>
-                <div style="font-size:10px;color:#5782FF">Editar plan</div>
-              </div>
-              <!-- Desayuno — completado -->
-              <div class="ph-card" style="padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:5px">
-                <div style="width:24px;height:24px;border-radius:50%;background:#28C66F;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                  <svg width="12" height="10" viewBox="0 0 12 10" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 5 L4.5 8.5 L11 1.5"/></svg>
-                </div>
-                <div style="flex:1">
-                  <div style="font-size:11px;color:#8298C1">Desayuno</div>
-                  <div style="font-size:9px;color:#8298C1">8:00 · 520 kcal</div>
-                </div>
-                <div style="color:#8298C1;font-size:13px">›</div>
-              </div>
-              <!-- Almuerzo — completado -->
-              <div class="ph-card" style="padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:5px">
-                <div style="width:24px;height:24px;border-radius:50%;background:#28C66F;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                  <svg width="12" height="10" viewBox="0 0 12 10" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 5 L4.5 8.5 L11 1.5"/></svg>
-                </div>
-                <div style="flex:1">
-                  <div style="font-size:11px;color:#8298C1">Almuerzo</div>
-                  <div style="font-size:9px;color:#8298C1">11:00 · 280 kcal</div>
-                </div>
-                <div style="color:#8298C1;font-size:13px">›</div>
-              </div>
-              <!-- Comida — pendiente -->
-              <div class="ph-card" style="padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:5px">
-                <div style="width:24px;height:24px;border-radius:50%;border:1.5px solid rgba(240,244,255,0.3);flex-shrink:0"></div>
-                <div style="flex:1">
-                  <div style="font-size:11px;font-weight:600;color:#F8FAFC">Comida</div>
-                  <div style="font-size:9px;color:#8298C1">14:00 · 780 kcal</div>
-                </div>
-                <div style="color:#8298C1;font-size:13px">›</div>
-              </div>
-              <!-- Merienda — pendiente -->
-              <div class="ph-card" style="padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:5px">
-                <div style="width:24px;height:24px;border-radius:50%;border:1.5px solid rgba(240,244,255,0.3);flex-shrink:0"></div>
-                <div style="flex:1">
-                  <div style="font-size:11px;font-weight:600;color:#F8FAFC">Merienda</div>
-                  <div style="font-size:9px;color:#8298C1">17:30 · 320 kcal</div>
-                </div>
-                <div style="color:#8298C1;font-size:13px">›</div>
-              </div>
-              <!-- Cena — pendiente -->
-              <div class="ph-card" style="padding:10px 12px;display:flex;align-items:center;gap:10px">
-                <div style="width:24px;height:24px;border-radius:50%;border:1.5px solid rgba(240,244,255,0.3);flex-shrink:0"></div>
-                <div style="flex:1">
-                  <div style="font-size:11px;font-weight:600;color:#F8FAFC">Cena</div>
-                  <div style="font-size:9px;color:#8298C1">21:00 · 500 kcal</div>
-                </div>
-                <div style="color:#8298C1;font-size:13px">›</div>
-              </div>
-              </div>
-              <div class="pscreen" style="padding:10px 14px 70px">
-                <div style="border-radius:16px;overflow:hidden;height:150px;background:linear-gradient(135deg,rgba(0,87,255,0.35),rgba(40,198,111,0.18));margin-bottom:12px;position:relative">
-                  <div style="position:absolute;bottom:10px;left:12px;font-size:13px;font-weight:700;color:#F8FAFC">Pollo al horno con arroz</div>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-                  <div style="font-size:15px;font-weight:700;color:#F8FAFC">Comida · 14:00</div>
-                  <div style="font-size:12px;font-weight:600;color:#0057FF">780 kcal</div>
-                </div>
-                <div style="display:flex;gap:6px;margin-bottom:12px">
-                  <div style="flex:1;text-align:center;background:rgba(229,83,83,0.1);border:1px solid rgba(229,83,83,0.22);border-radius:10px;padding:8px 4px"><div style="font-size:12px;font-weight:700;color:#F8FAFC">52g</div><div style="font-size:8px;color:#8298C1">Proteína</div></div>
-                  <div style="flex:1;text-align:center;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.22);border-radius:10px;padding:8px 4px"><div style="font-size:12px;font-weight:700;color:#F8FAFC">64g</div><div style="font-size:8px;color:#8298C1">Carbos</div></div>
-                  <div style="flex:1;text-align:center;background:rgba(0,87,255,0.1);border:1px solid rgba(0,87,255,0.22);border-radius:10px;padding:8px 4px"><div style="font-size:12px;font-weight:700;color:#F8FAFC">18g</div><div style="font-size:8px;color:#8298C1">Grasas</div></div>
-                </div>
-                <div style="font-size:12px;font-weight:700;color:#F8FAFC;margin-bottom:6px">Ingredientes</div>
-                <div style="display:flex;flex-wrap:wrap;gap:6px">
-                  <div style="font-size:10px;color:#A6BBE0;background:rgba(240,244,255,0.06);border:1px solid rgba(240,244,255,0.12);border-radius:20px;padding:5px 12px">Pechuga de pollo</div>
-                  <div style="font-size:10px;color:#A6BBE0;background:rgba(240,244,255,0.06);border:1px solid rgba(240,244,255,0.12);border-radius:20px;padding:5px 12px">Arroz integral</div>
-                  <div style="font-size:10px;color:#A6BBE0;background:rgba(240,244,255,0.06);border:1px solid rgba(240,244,255,0.12);border-radius:20px;padding:5px 12px">Brócoli</div>
-                  <div style="font-size:10px;color:#A6BBE0;background:rgba(240,244,255,0.06);border:1px solid rgba(240,244,255,0.12);border-radius:20px;padding:5px 12px">Aceite de oliva</div>
-                </div>
-              </div>
-            </div>
-            <div class="screen-dots"><div class="sdot active"></div><div class="sdot"></div></div>
-            <!-- Bottom nav — bowl active (2nd) -->
-            <div class="ph-nav">
-              <div class="ph-nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8298C1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="15" cy="5" r="2" fill="#8298C1" stroke="none"/><path d="M9 21l2-7-3-3.5 4-3.5 4 2.5 3.5-2"/><path d="M6.5 21l3-7"/></svg></div>
-              <div class="ph-nav-item" style="background:rgba(240,244,255,0.1);border-radius:20px;padding:5px 10px">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F8FAFC" stroke-width="1.8" stroke-linecap="round"><path d="M12 3c-4 0-7 3.5-7 7.5 0 1 .2 2 .5 2.8L4 19l5.5-1.5c.7.3 1.6.5 2.5.5 4 0 7-3.1 7-7S16 3 12 3z"/></svg>
-              </div>
-              <div class="ph-nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8298C1" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
-              <div class="ph-nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8298C1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h3l2 3H3V7z"/><path d="M3 10h18v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V10z"/></svg></div>
-              <div class="ph-nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8298C1" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="13" width="20" height="8" rx="3"/><path d="M6 13V10a6 6 0 0 1 12 0v3"/><circle cx="8" cy="17" r="1.5" fill="#8298C1" stroke="none"/><circle cx="16" cy="17" r="1.5" fill="#8298C1" stroke="none"/></svg></div>
-            </div>
-            <div class="ph-home-bar"></div>
-          </div>
           </div>
         </div>
-      </div>
-
-      <!-- Main phone — Dashboard screen -->
-      <div class="phone-wrap-main">
-        <div class="phone-frame">
-          <div class="phone-notch-btn"></div>
-          <div class="phone-screen-inset">
+        <div class="phone">
+          <div class="notch"></div>
           <div class="phone-screen">
-            <div class="phone-glow"></div>
-            <div class="phone-island"></div>
-            <div class="phone-status">
-              <span>9:41</span>
-              <div class="phone-status-r">
-                <svg width="15" height="10" viewBox="0 0 15 10" fill="rgba(248,250,252,0.85)"><rect x="0" y="4" width="3" height="6" rx="1"/><rect x="4" y="2" width="3" height="8" rx="1"/><rect x="8" y="0" width="3" height="10" rx="1"/></svg>
-                <svg width="22" height="11" viewBox="0 0 22 11" fill="none"><rect x="0" y="0.5" width="18" height="10" rx="3" stroke="rgba(248,250,252,0.85)" stroke-width="1.2"/><rect x="1.5" y="2" width="14" height="7" rx="2" fill="rgba(248,250,252,0.85)"/><rect x="19" y="3.5" width="3" height="4" rx="1.5" fill="rgba(248,250,252,0.4)"/></svg>
+            <div class="scr">
+              <div class="scr-h"><b>Tu plan</b><i>Semana 7</i></div>
+              <div class="meal"><div class="meal-ic">🎯</div><div class="meal-x"><b>Objetivo</b><span>Definición sostenible</span></div><div class="meal-k">−0,4 kg/sem</div></div>
+              <div class="meal"><div class="meal-ic">🔥</div><div class="meal-x"><b>Calorías</b><span>Ajustadas esta semana</span></div><div class="meal-k">2300</div></div>
+              <div class="meal"><div class="meal-ic">🥩</div><div class="meal-x"><b>Proteína</b><span>2,0 g por kg</span></div><div class="meal-k">165 g</div></div>
+              <div class="meal"><div class="meal-ic">🍺</div><div class="meal-x"><b>Margen libre</b><span>Para el finde</span></div><div class="meal-k">600 kcal</div></div>
+              <div class="spark">
+                <div class="spark-t"><span>Entrenos</span><b>4 / semana</b></div>
+                <p style="margin:0;font-size:11.5px;line-height:1.45;color:var(--text-low)">Torso/pierna. Progresión de carga automática según tus registros.</p>
               </div>
+              <div class="tabbar"><i></i><i></i><i></i><i></i></div>
             </div>
-            <div class="phone-content">
-              <div class="pscreen active">
-              <!-- Header row -->
-              <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
-                <div>
-                  <div style="font-size:11px;color:#00D4FF;display:flex;align-items:center;gap:5px;margin-bottom:2px">
-                    <svg width="9" height="13" viewBox="0 0 89.7 129" fill="#00D4FF"><polygon points="47.8,62.4 57.2,63.6 9.8,107.4 9.8,129 79.8,64.1 61.8,49.2"/><polygon points="9.8,64.9 27.9,79.8 41.9,66.6 32.5,65.4 79.8,21.6 79.8,0"/></svg>
-                    Entrenamiento
-                  </div>
-                  <div style="font-size:28px;font-weight:700;color:#F8FAFC;letter-spacing:-0.01em;line-height:1.1">Plan de hoy</div>
-                </div>
-                <div style="width:34px;height:34px;border-radius:50%;background:rgba(134,149,172,0.2);border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;margin-top:2px">
-                  <svg width="15" height="15" viewBox="0 0 20 20" fill="none" stroke="#F8FAFC" stroke-width="1.6" stroke-linecap="round"><circle cx="10" cy="7" r="3.5"/><path d="M3 18c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>
-                </div>
-              </div>
-              <!-- Training card with bolt watermark -->
-              <div style="background:rgba(240,244,255,0.06);border:1px solid rgba(240,244,255,0.14);border-radius:20px;padding:14px 14px 12px;margin-bottom:12px;position:relative;overflow:hidden;min-height:104px">
-                <div style="position:absolute;right:-6px;bottom:-10px;opacity:0.07;pointer-events:none">
-                  <svg width="88" height="104" viewBox="0 0 89.7 129" fill="#F8FAFC"><polygon points="47.8,62.4 57.2,63.6 9.8,107.4 9.8,129 79.8,64.1 61.8,49.2"/><polygon points="9.8,64.9 27.9,79.8 41.9,66.6 32.5,65.4 79.8,21.6 79.8,0"/></svg>
-                </div>
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
-                  <div style="font-size:10px;color:#8298C1;letter-spacing:0.06em">Fuerza y Resistencia</div>
-                  <div style="font-size:9px;font-weight:700;letter-spacing:0.07em;color:#F59E0B;background:rgba(245,158,11,0.15);padding:3px 8px;border-radius:4px">Pendiente</div>
-                </div>
-                <div style="font-size:22px;font-weight:700;color:#F8FAFC;margin-bottom:12px">Tren superior</div>
-                <button style="width:100%;background:rgba(240,244,255,0.1);border:1px solid rgba(240,244,255,0.18);border-radius:10px;padding:9px;font-family:Outfit,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#F8FAFC;cursor:default">ENTRENAR</button>
-              </div>
-              <!-- Próxima comida -->
-              <div style="font-size:12px;font-weight:600;color:#F8FAFC;margin-bottom:6px">Próxima comida</div>
-              <div class="ph-card" style="display:flex;align-items:center;gap:10px;padding:10px 13px;margin-bottom:12px">
-                <div style="width:28px;height:28px;border-radius:50%;border:1.5px solid rgba(240,244,255,0.25);flex-shrink:0"></div>
-                <div style="flex:1"><div style="font-size:12px;font-weight:600;color:#F8FAFC">Comida</div><div style="font-size:10px;color:#8298C1;margin-top:1px">14:00 · 780 kcal</div></div>
-                <div style="color:#8298C1;font-size:15px">›</div>
-              </div>
-              <!-- Pasos diarios -->
-              <div style="font-size:12px;font-weight:600;color:#F8FAFC;margin-bottom:6px">Pasos diarios</div>
-              <div class="ph-card" style="padding:12px 14px">
-                <div style="font-size:22px;font-weight:700;color:#F8FAFC;letter-spacing:-0.01em">6 240</div>
-                <div style="font-size:10px;color:#8298C1;margin-bottom:7px">pasos</div>
-                <div class="ph-bar"><div class="ph-bar-fill" style="width:60%"></div></div>
-                <div style="font-size:9px;color:#8298C1;margin-top:5px">Media diaria: 7 840 pasos</div>
-              </div>
-              </div>
-              <div class="pscreen">
-                <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-                  <div style="font-size:20px;font-weight:700;color:#F8FAFC">Tren superior</div>
-                </div>
-                <div style="font-size:10px;color:#8298C1;margin-bottom:10px">4 ejercicios · 52 min restantes</div>
-                <div class="ph-card" style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:6px">
-                  <div style="width:26px;height:26px;border-radius:50%;background:#28C66F;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="11" height="9" viewBox="0 0 12 10" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 5 L4.5 8.5 L11 1.5"/></svg></div>
-                  <div style="flex:1"><div style="font-size:12px;font-weight:600;color:#F8FAFC">Press banca</div><div style="font-size:9px;color:#8298C1">4 series × 8 reps</div></div>
-                  <div style="font-size:11px;font-weight:700;color:#28C66F">80kg</div>
-                </div>
-                <div class="ph-card" style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:6px;border-color:rgba(0,87,255,0.3);background:rgba(0,87,255,0.06)">
-                  <div style="width:26px;height:26px;border-radius:50%;background:#0057FF;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:700;color:white">2</div>
-                  <div style="flex:1"><div style="font-size:12px;font-weight:600;color:#F8FAFC">Remo con barra</div><div style="font-size:9px;color:#8298C1">4 series × 10 reps</div></div>
-                  <div style="font-size:11px;font-weight:700;color:#F8FAFC">60kg</div>
-                </div>
-                <div class="ph-card" style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:6px">
-                  <div style="width:26px;height:26px;border-radius:50%;border:1.5px solid rgba(240,244,255,0.3);flex-shrink:0"></div>
-                  <div style="flex:1"><div style="font-size:12px;font-weight:600;color:#F8FAFC">Press militar</div><div style="font-size:9px;color:#8298C1">3 series × 10 reps</div></div>
-                  <div style="font-size:11px;color:#8298C1">35kg</div>
-                </div>
-                <div class="ph-card" style="display:flex;align-items:center;gap:10px;padding:10px 12px">
-                  <div style="width:26px;height:26px;border-radius:50%;border:1.5px solid rgba(240,244,255,0.3);flex-shrink:0"></div>
-                  <div style="flex:1"><div style="font-size:12px;font-weight:600;color:#F8FAFC">Curl de bíceps</div><div style="font-size:9px;color:#8298C1">3 series × 12 reps</div></div>
-                  <div style="font-size:11px;color:#8298C1">14kg</div>
-                </div>
-              </div>
-            </div>
-            <div class="screen-dots"><div class="sdot active"></div><div class="sdot"></div></div>
-            <!-- Bottom nav — runner active (1st) -->
-            <div class="ph-nav">
-              <div class="ph-nav-item" style="background:rgba(240,244,255,0.1);border-radius:20px;padding:5px 10px">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F8FAFC" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="15" cy="5" r="2" fill="#F8FAFC" stroke="none"/><path d="M9 21l2-7-3-3.5 4-3.5 4 2.5 3.5-2"/><path d="M6.5 21l3-7"/></svg>
-              </div>
-              <div class="ph-nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8298C1" stroke-width="1.8" stroke-linecap="round"><path d="M12 3c-4 0-7 3.5-7 7.5 0 1 .2 2 .5 2.8L4 19l5.5-1.5c.7.3 1.6.5 2.5.5 4 0 7-3.1 7-7S16 3 12 3z"/></svg></div>
-              <div class="ph-nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8298C1" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
-              <div class="ph-nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8298C1" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h3l2 3H3V7z"/><path d="M3 10h18v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V10z"/></svg></div>
-              <div class="ph-nav-item"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8298C1" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="13" width="20" height="8" rx="3"/><path d="M6 13V10a6 6 0 0 1 12 0v3"/><circle cx="8" cy="17" r="1.5" fill="#8298C1" stroke="none"/><circle cx="16" cy="17" r="1.5" fill="#8298C1" stroke="none"/></svg></div>
-            </div>
-            <div class="ph-home-bar"></div>
-          </div>
           </div>
         </div>
       </div>
     </div>
-  </section>
 
-  <!-- ═══════ WHY STEELBACK ═══════ -->
-  <section class="why-section">
-    <div class="why-header">
-      <div class="section-label">Por qué Steelback</div>
-      <h2 class="section-title">No es una app más.</h2>
+    <div class="hapo-note">
+      <p>Comes lo que te gusta y entrenas. El sistema evalúa tu progreso semana a semana cruzando peso, cintura y rendimiento en fuerza, y recalibra el plan según cómo respondes. No sigues un plan estático: sigue el ritmo de tu progreso.</p>
     </div>
-    <div class="why-grid">
-      <div class="why-card fade-up">
-        <div class="why-num">01</div>
-        <div class="why-title">Prescribe, no registra.</div>
-        <p class="why-body">Steelback no te pide que apuntes lo que has comido o cuánto has levantado. Te dice qué hacer: qué entrenas hoy, qué comes, a qué hora. Tú ejecutas.</p>
-      </div>
-      <div class="why-card fade-up">
-        <div class="why-num">02</div>
-        <div class="why-title">Se adapta a tu cuerpo real cada semana.</div>
-        <p class="why-body">No hay planes fijos. Cada semana el sistema cruza tus métricas corporales, tu progreso de fuerza y tu actividad diaria, y recalibra tu plan en consecuencia.</p>
-      </div>
-      <div class="why-card fade-up">
-        <div class="why-num">03</div>
-        <div class="why-title">La lógica de un buen coach al precio de una app.</div>
-        <p class="why-body">Un coach online cobra entre 100 y 200 euros al mes. Steelback replica esa lógica de forma automática — sin reuniones, sin WhatsApps, sin esperas.</p>
-      </div>
-    </div>
-  </section>
+  </div>
+</section>
 
-  <!-- ═══════ HAPO ═══════ -->
-  <section class="hapo-section" id="hapo-section">
-    <div class="hapo-inner">
-      <div class="hapo-badge">
-        <svg width="11" height="11" viewBox="0 0 11 11" fill="currentColor"><polygon points="5.5,0 7,4 11,4 7.8,6.5 9,11 5.5,8.3 2,11 3.2,6.5 0,4 4,4"/></svg>
-        El motor inteligente
-      </div>
-      <h2 class="hapo-title">Conoce a HAPO</h2>
-      <p class="hapo-text">HAPO es el sistema inteligente que hay detrás de Steelback. Cada semana cruza tus datos corporales con tu progreso en el gimnasio para entender cómo está evolucionando tu cuerpo de verdad — y ajustar tu plan en consecuencia.</p>
+<!-- ═══════ 04 GENTE COMO TÚ ═══════ -->
+<section class="gente">
+  <div class="gente-head wrap">
+    <h2>Gente como tú</h2>
+    <span>Transformaciones reales de usuarios del programa.</span>
+  </div>
 
-      <div class="hapo-diagram">
-        <div class="hapo-sources">
-          <div class="hapo-source-card">
-            <div class="hapo-source-icon">
-              <svg width="17" height="17" viewBox="0 0 17 17" fill="rgba(0,87,255,0.85)"><ellipse cx="8.5" cy="5" rx="6" ry="4"/><path d="M2.5 10c0 2.2 2.7 4 6 4s6-1.8 6-4" stroke="rgba(0,87,255,0.85)" fill="none" stroke-width="1.4"/><line x1="2.5" y1="5" x2="2.5" y2="10" stroke="rgba(0,87,255,0.85)" stroke-width="1.4"/><line x1="14.5" y1="5" x2="14.5" y2="10" stroke="rgba(0,87,255,0.85)" stroke-width="1.4"/></svg>
-            </div>
-            <div class="hapo-source-title">Métricas corporales</div>
-            <div class="hapo-source-desc">Peso, grasa, medidas semanales</div>
+  <div class="rail"><!--TRANSFORMACIONES-->
+    <div style="flex:0 0 36px"></div>
+  </div>
+
+  <div class="wrap"><p class="gente-foot">Todo lo que hace un coach. Sin lo que cuesta un coach.</p></div>
+</section>
+
+<!-- ═══════ 05 LISTA ═══════ -->
+<section class="lista" id="lista">
+  <div class="glow" style="left:50%; bottom:-420px; transform:translateX(-50%); width:1200px; height:800px; background:radial-gradient(circle, rgba(0,87,255,.26) 0%, rgba(0,87,255,0) 66%);"></div>
+
+  <div class="lista-in">
+    <h2>Tu objetivo y tu comida no son incompatibles.</h2>
+
+    <div class="form-block">
+      <form id="listaForm" data-signup novalidate>
+        <div class="grid">
+          <div class="field">
+            <label for="f-nombre">Nombre</label>
+            <input id="f-nombre" name="nombre" type="text" placeholder="Marcos" autocomplete="given-name" required maxlength="60">
           </div>
-          <div class="hapo-source-card">
-            <div class="hapo-source-icon">
-              <svg width="17" height="17" viewBox="0 0 17 17" fill="none" stroke="rgba(0,87,255,0.85)" stroke-width="1.5" stroke-linecap="round"><path d="M1 12 L4 7 L7 9.5 L11 4 L16 6"/></svg>
-            </div>
-            <div class="hapo-source-title">Progreso de fuerza</div>
-            <div class="hapo-source-desc">Cargas y series en el gimnasio</div>
+          <div class="field">
+            <label for="f-apellido">Apellido</label>
+            <input id="f-apellido" name="apellido" type="text" placeholder="Ruiz" autocomplete="family-name" required maxlength="60">
           </div>
-          <div class="hapo-source-card">
-            <div class="hapo-source-icon">
-              <svg width="17" height="17" viewBox="0 0 17 17" fill="rgba(0,87,255,0.85)"><circle cx="8.5" cy="5" r="3.5"/><path d="M3 16c0-3 2.5-5.5 5.5-5.5S14 13 14 16" fill="rgba(0,87,255,0.85)"/></svg>
-            </div>
-            <div class="hapo-source-title">Actividad diaria</div>
-            <div class="hapo-source-desc">Pasos, sueño, recuperación</div>
+          <div class="field">
+            <label for="f-edad">Edad</label>
+            <input id="f-edad" name="edad" type="number" inputmode="numeric" placeholder="28" min="16" max="90" required>
+          </div>
+          <div class="field">
+            <label for="f-email">Email</label>
+            <input id="f-email" name="email" type="email" placeholder="tu@email.com" autocomplete="email" required maxlength="254">
+          </div>
+          <input class="hp" type="text" name="empresa" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <div class="field full">
+            <button type="submit" class="btn" style="width:100%">Entrar en la lista</button>
           </div>
         </div>
-
-        <div class="hapo-arrow">
-          <svg width="36" height="16" viewBox="0 0 36 16" fill="none">
-            <path d="M0 8 H30" stroke="rgba(0,87,255,0.5)" stroke-width="1.5"/>
-            <path d="M25 2 L33 8 L25 14" stroke="rgba(0,87,255,0.5)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-          </svg>
-        </div>
-
-        <div class="hapo-engine">
-          <div class="hapo-engine-name">HAPO</div>
-          <div class="hapo-engine-sub">Motor adaptativo</div>
-          <div class="hapo-dots">
-            <div class="hapo-dot"></div>
-            <div class="hapo-dot"></div>
-            <div class="hapo-dot"></div>
-          </div>
-        </div>
-
-        <div class="hapo-arrow hapo-arrow-green">
-          <svg width="36" height="16" viewBox="0 0 36 16" fill="none">
-            <path d="M0 8 H30" stroke="rgba(40,198,111,0.55)" stroke-width="1.5"/>
-            <path d="M25 2 L33 8 L25 14" stroke="rgba(40,198,111,0.55)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-          </svg>
-        </div>
-
-        <div class="hapo-output-card">
-          <div style="width:36px;height:36px;border-radius:10px;background:rgba(40,198,111,0.14);border:1px solid rgba(40,198,111,0.24);margin-bottom:10px;display:flex;align-items:center;justify-content:center">
-            <svg width="17" height="17" viewBox="0 0 17 17" fill="none" stroke="#28C66F" stroke-width="1.5" stroke-linecap="round"><path d="M2 9 L6 13 L15 4"/></svg>
-          </div>
-          <div class="hapo-output-title">Plan actualizado</div>
-          <div class="hapo-output-desc">Entrenamiento + nutrición recalibrados para la semana</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════ HOW IT WORKS ═══════ -->
-  <section class="how-section">
-    <div class="how-header">
-      <div class="section-label">Cómo funciona</div>
-      <h2 class="section-title">Tres pasos.<br>Sin excusas.</h2>
-    </div>
-    <div class="steps-grid">
-      <div class="step fade-up">
-        <div class="step-num">01</div>
-        <div class="step-bar"></div>
-        <div class="step-title">Steelback te prescribe tu plan</div>
-        <p class="step-body">Entrenamiento del día y qué comer, con platos reales. Sin buscar ni improvisar. Todo listo cuando lo necesitas.</p>
-      </div>
-      <div class="step fade-up">
-        <div class="step-num">02</div>
-        <div class="step-bar"></div>
-        <div class="step-title">Tú ejecutas y registras</div>
-        <p class="step-body">Entrena, come lo que toca y anota tu progreso. Una vez por semana registras tus datos corporales. No más de cinco minutos.</p>
-      </div>
-      <div class="step fade-up">
-        <div class="step-num">03</div>
-        <div class="step-bar"></div>
-        <div class="step-title">El sistema aprende y ajusta</div>
-        <p class="step-body">Cada semana HAPO actualiza tu plan según cómo responde tu cuerpo. El proceso no para hasta que llegas a tu objetivo.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════ CTA FORM ═══════ -->
-  <section class="cta-section" id="cta">
-    <div class="cta-inner">
-      <h2 class="cta-title">Sé el primero en probar Steelback.</h2>
-      <p class="cta-body">Estamos en fase de desarrollo. Déjanos tu email y te avisamos cuando abramos acceso.</p>
-      <form class="cta-form" id="ctaForm" data-signup novalidate>
-        <input class="cta-input" type="email" name="email" placeholder="tu@email.com" required autocomplete="email">
-        <input class="hp-field" type="text" name="empresa" tabindex="-1" autocomplete="off" aria-hidden="true">
-        <button class="cta-btn" type="submit">Quiero acceso anticipado</button>
       </form>
-      <p class="form-error" id="ctaError" role="alert" style="max-width:440px;margin:12px auto 0"></p>
-      <div class="form-success" id="ctaSuccess" role="status" style="max-width:440px;margin:16px auto 0">✓ Apuntado. Te avisamos cuando abramos acceso.</div>
+      <p class="form-error" id="listaError" role="alert"></p>
+      <p class="form-note" id="listaNota">Al apuntarte recibes tu posición en la cola y un enlace de invitación propio. Cuantos más amigos se apunten con tu enlace, más subes y antes entras.</p>
     </div>
-  </section>
 
-  <!-- ═══════ FOOTER ═══════ -->
-  <footer>
-    <a href="#" class="footer-logo">
-      <svg width="17" height="25" viewBox="0 0 89.7 129" fill="rgba(248,250,252,0.4)" xmlns="http://www.w3.org/2000/svg">
-        <polygon points="47.8,62.4 57.2,63.6 9.8,107.4 9.8,129 79.8,64.1 61.8,49.2"/>
-        <polygon points="9.8,64.9 27.9,79.8 41.9,66.6 32.5,65.4 79.8,21.6 79.8,0"/>
-      </svg>
-      <span class="footer-logo-word">STEELBACK</span>
-    </a>
-    <a href="mailto:info@steelbackfit.com" class="footer-email">info@steelbackfit.com</a>
-    <div class="footer-social">
-      <a href="#" class="social-link" title="Instagram" aria-label="Instagram">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4.5"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
-      </a>
-      <a href="#" class="social-link" title="TikTok" aria-label="TikTok">
-        <svg width="15" height="17" viewBox="0 0 24 27" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.26 8.26 0 0 0 4.84 1.55V6.79a4.85 4.85 0 0 1-1.07-.1z"/></svg>
-      </a>
+    <div class="pos-card" id="listaSuccess">
+      <div class="pos-top">
+        <div>
+          <span class="pos-lab">Tu posición</span>
+          <span class="pos-num" id="posNum">#—</span>
+        </div>
+        <span class="pos-note" id="posNota">Apúntate para ver tu posición en la cola</span>
+      </div>
+      <div class="pos-link">
+        <div><code id="inviteLink">tu enlace de invitación aparecerá aquí</code></div>
+        <button type="button" class="copy-btn" id="copyBtn" disabled>Copiar enlace</button>
+      </div>
     </div>
+  </div>
+
+  <footer class="wrap">
+    <svg viewBox="0 0 483.9 83.532" fill="none" role="img" aria-label="Steelback">
+      <g transform="matrix(1,0,0,-1,443.804,69.344)"><path d="M 26.492 0 L 11.13 20.178 L 11.13 0 L 0 0 L 0 45.693 L 11.13 45.693 L 11.13 25.646 L 26.362 45.693 L 39.445 45.693 L 21.74 23.302 L 40.096 0 L 26.492 0 Z" fill="#F0F4FF"/></g>
+      <g transform="matrix(1,0,0,-1,385.827,69.670)"><path d="M 0 23.237 C 0 27.75 0.976 31.764 2.929 35.279 C 4.882 38.837 7.594 41.593 11.065 43.545 C 14.58 45.542 18.551 46.54 22.977 46.54 C 28.401 46.54 33.044 45.108 36.906 42.244 C 40.768 39.38 43.35 35.474 44.652 30.527 L 32.415 30.527 C 31.504 32.437 30.202 33.89 28.51 34.888 C 26.861 35.887 24.973 36.386 22.847 36.386 C 19.419 36.386 16.641 35.192 14.515 32.806 C 12.389 30.419 11.326 27.229 11.326 23.237 C 11.326 19.245 12.389 16.056 14.515 13.669 C 16.641 11.282 19.419 10.089 22.847 10.089 C 24.973 10.089 26.861 10.588 28.51 11.586 C 30.202 12.584 31.504 14.038 32.415 15.947 L 44.652 15.947 C 43.35 11 40.768 7.095 36.906 4.231 C 33.044 1.41 28.401 0 22.977 0 C 18.551 0 14.58 0.976 11.065 2.929 C 7.594 4.925 4.882 7.681 2.929 11.196 C 0.976 14.71 0 18.724 0 23.237 Z" fill="#F0F4FF"/></g>
+      <g transform="matrix(1,0,0,-1,330.220,69.344)"><path d="M 31.439 8.071 L 14.385 8.071 L 11.651 0 L 0 0 L 16.533 45.693 L 29.421 45.693 L 45.954 0 L 34.172 0 L 31.439 8.071 Z M 28.575 16.663 L 22.912 33.391 L 17.314 16.663 L 28.575 16.663 Z" fill="#F0F4FF"/></g>
+      <g transform="matrix(1,0,0,-1,283.799,69.344)"><path d="M 27.663 23.433 C 30.31 22.868 32.437 21.545 34.042 19.462 C 35.648 17.423 36.451 15.079 36.451 12.432 C 36.451 8.614 35.105 5.576 32.415 3.32 C 29.768 1.107 26.058 0 21.285 0 L 0 0 L 0 45.693 L 20.569 45.693 C 25.212 45.693 28.835 44.63 31.439 42.504 C 34.086 40.378 35.409 37.492 35.409 33.847 C 35.409 31.157 34.693 28.922 33.261 27.143 C 31.873 25.364 30.007 24.127 27.663 23.433 Z M 11.13 27.208 L 18.421 27.208 C 20.243 27.208 21.632 27.598 22.586 28.379 C 23.584 29.204 24.083 30.397 24.083 31.959 C 24.083 33.522 23.584 34.715 22.586 35.539 C 21.632 36.364 20.243 36.776 18.421 36.776 L 11.13 36.776 L 11.13 27.208 Z M 19.332 8.982 C 21.198 8.982 22.63 9.395 23.628 10.219 C 24.669 11.087 25.19 12.324 25.19 13.929 C 25.19 15.535 24.648 16.793 23.563 17.705 C 22.521 18.616 21.068 19.071 19.202 19.071 L 11.13 19.071 L 11.13 8.982 L 19.332 8.982 Z" fill="#F0F4FF"/></g>
+      <g transform="matrix(1,0,0,-1,246.271,69.344)"><path d="M 11.13 8.592 L 25.711 8.592 L 25.711 0 L 0 0 L 0 45.693 L 11.13 45.693 L 11.13 8.592 Z" fill="#F0F4FF"/></g>
+      <g transform="matrix(1,0,0,-1,204.546,69.344)"><path d="M 11.13 36.776 L 11.13 27.533 L 26.036 27.533 L 26.036 18.941 L 11.13 18.941 L 11.13 8.917 L 27.989 8.917 L 27.989 0 L 0 0 L 0 45.693 L 27.989 45.693 L 27.989 36.776 L 11.13 36.776 Z" fill="#F0F4FF"/></g>
+      <g transform="matrix(1,0,0,-1,162.822,69.344)"><path d="M 11.13 36.776 L 11.13 27.533 L 26.036 27.533 L 26.036 18.941 L 11.13 18.941 L 11.13 8.917 L 27.989 8.917 L 27.989 0 L 0 0 L 0 45.693 L 27.989 45.693 L 27.989 36.776 L 11.13 36.776 Z" fill="#F0F4FF"/></g>
+      <g transform="matrix(1,0,0,-1,115.383,69.344)"><path d="M 35.344 45.693 L 35.344 36.776 L 23.237 36.776 L 23.237 0 L 12.107 0 L 12.107 36.776 L 0 36.776 L 0 45.693 L 35.344 45.693 Z" fill="#F0F4FF"/></g>
+      <g transform="matrix(1,0,0,-1,70,69.800)"><path d="M 17.835 0 C 14.493 0 11.499 0.542 8.852 1.627 C 6.205 2.712 4.079 4.318 2.473 6.444 C 0.911 8.57 0.087 11.13 0 14.125 L 11.846 14.125 C 12.02 12.432 12.606 11.13 13.604 10.219 C 14.602 9.351 15.904 8.917 17.509 8.917 C 19.158 8.917 20.46 9.286 21.415 10.024 C 22.369 10.805 22.847 11.868 22.847 13.213 C 22.847 14.342 22.456 15.275 21.675 16.012 C 20.937 16.75 20.004 17.357 18.876 17.835 C 17.791 18.312 16.229 18.855 14.19 19.462 C 11.239 20.373 8.831 21.285 6.965 22.196 C 5.099 23.107 3.493 24.452 2.148 26.231 C 0.803 28.011 0.13 30.332 0.13 33.196 C 0.13 37.449 1.671 40.768 4.752 43.155 C 7.833 45.585 11.846 46.8 16.793 46.8 C 21.827 46.8 25.884 45.585 28.965 43.155 C 32.046 40.768 33.695 37.427 33.912 33.131 L 21.87 33.131 C 21.784 34.606 21.241 35.756 20.243 36.581 C 19.245 37.449 17.965 37.883 16.403 37.883 C 15.058 37.883 13.973 37.514 13.148 36.776 C 12.324 36.082 11.912 35.062 11.912 33.717 C 11.912 32.241 12.606 31.092 13.994 30.267 C 15.383 29.443 17.553 28.553 20.503 27.598 C 23.454 26.6 25.841 25.646 27.663 24.734 C 29.529 23.823 31.135 22.5 32.48 20.764 C 33.825 19.028 34.498 16.793 34.498 14.06 C 34.498 11.456 33.825 9.091 32.48 6.965 C 31.178 4.838 29.269 3.146 26.752 1.888 C 24.235 0.629 21.263 0 17.835 0 Z" fill="#F0F4FF"/></g>
+      <g transform="matrix(1,0,0,-1,0,83.532)"><path d="M 30.809 48.876 C 29.321 47.505 27.259 45.605 26.228 44.654 C 25.19 43.695 24.445 42.895 24.557 42.858 C 24.668 42.822 25.511 42.714 26.431 42.618 C 27.35 42.521 28.667 42.359 29.356 42.258 L 30.61 42.074 L 30.234 41.77 C 30.027 41.602 28.89 40.553 27.707 39.439 C 26.523 38.324 25.125 37.028 24.6 36.559 C 24.074 36.09 23.286 35.373 22.848 34.966 C 22.411 34.559 19.831 32.195 17.116 29.713 C 14.402 27.231 11.571 24.614 10.827 23.899 C 8.793 21.945 1.841 15.415 0.86 14.537 L 0 13.767 L 0 6.854 C 0 0.78 0 0.893 0 0 C 3.762 3.305 0 0 3.762 3.305 C 11.503 10.405 16.872 15.355 17.992 16.426 C 19.853 18.203 28.369 26.136 31.578 29.079 C 36.767 33.839 42.79 39.399 43.932 40.483 L 45.272 41.755 L 44.11 42.701 C 42.992 43.612 41.715 44.676 36.242 49.255 C 34.851 50.418 33.668 51.37 33.614 51.37 C 33.561 51.369 32.298 50.247 30.809 48.876 Z" fill="#F0F4FF" fill-rule="evenodd"/></g>
+      <g transform="matrix(1,0,0,-1,0.062,52.224)"><path d="M 36.893 43.388 C 38.331 44.661 43.496 49.316 45.063 50.751 C 45.947 51.561 46.688 52.223 46.71 52.224 C 46.732 52.224 46.743 49.054 46.735 45.179 L 46.72 38.134 L 45.735 37.258 C 44.672 36.312 39.16 31.303 35.923 28.342 C 34.822 27.334 31.989 24.763 29.628 22.626 C 27.266 20.49 24.725 18.191 23.981 17.517 C 23.237 16.843 22.341 16.048 21.991 15.75 C 21.64 15.452 20.597 14.526 19.673 13.694 C 18.749 12.862 17.482 11.751 16.859 11.227 C 16.235 10.702 15.747 10.251 15.774 10.224 C 15.828 10.17 21.659 9.397 22.058 9.39 C 22.214 9.388 22.037 9.136 21.593 8.728 C 21.199 8.366 20.554 7.772 20.16 7.409 C 16.463 3.998 12.01 0 11.907 0 C 11.838 0 11.642 0.125 11.471 0.279 C 11.301 0.432 10.52 1.095 9.736 1.751 C 8.952 2.408 7.34 3.761 6.154 4.757 C 4.969 5.753 3.39 7.078 2.645 7.701 C 1.901 8.323 1.106 8.997 0.879 9.197 C 0.653 9.397 0.33 9.668 0.163 9.798 C -0.127 10.025 -0.097 10.077 0.814 10.924 C 1.34 11.412 2.386 12.361 3.139 13.031 C 3.892 13.702 5.791 15.392 7.358 16.788 C 8.926 18.184 10.996 20.048 11.96 20.932 C 12.923 21.815 14.074 22.858 14.518 23.25 C 14.961 23.642 17.147 25.604 19.374 27.61 C 21.601 29.616 23.674 31.482 23.981 31.757 C 24.471 32.196 28.629 35.946 34.336 41.094 C 35.347 42.006 36.497 43.038 36.893 43.388 Z" fill="#F0F4FF"/></g>
+    </svg>
+    <span>Steelback aún no está disponible. Apúntate a la lista para entrar entre los primeros.</span>
   </footer>
+</section>
 
-  <script>
-    // Phone screen carousel
-    document.querySelectorAll('.phone-content').forEach(container => {
-      const screens = container.querySelectorAll('.pscreen');
-      const dots = container.parentElement.querySelectorAll('.sdot');
-      if (screens.length < 2) return;
-      let idx = 0;
-      function show(i) {
-        screens.forEach((s, n) => s.classList.toggle('active', n === i));
-        dots.forEach((d, n) => d.classList.toggle('active', n === i));
-        idx = i;
+<script>
+  const ENDPOINT = '/api/subscribe';
+
+  // Código de invitación de quien nos trajo, si venimos de un enlace ?ref=
+  const REF = new URLSearchParams(location.search).get('ref');
+
+  document.querySelectorAll('form[data-signup]').forEach(form => {
+    const base = form.id.replace(/Form$/, '');
+    const errorEl = document.getElementById(base + 'Error');
+    const notaEl = document.getElementById(base + 'Nota');
+    const btn = form.querySelector('button[type="submit"]');
+    const btnLabel = btn.textContent;
+    const campos = ['nombre', 'apellido', 'edad', 'email']
+      .map(n => form.querySelector(`input[name="${n}"]`));
+
+    const posNum = document.getElementById('posNum');
+    const posNota = document.getElementById('posNota');
+    const linkEl = document.getElementById('inviteLink');
+    const copyBtn = document.getElementById('copyBtn');
+
+    const fail = (msg, campo) => {
+      errorEl.textContent = msg;
+      errorEl.classList.add('visible');
+      if (campo) { campo.setAttribute('aria-invalid', 'true'); campo.focus(); }
+    };
+
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      errorEl.classList.remove('visible');
+      errorEl.textContent = '';
+      campos.forEach(c => c.removeAttribute('aria-invalid'));
+
+      const [nombre, apellido, edad, email] = campos.map(c => c.value.trim());
+
+      // Validación propia: el mensaje nativo no se puede traducir ni estilar
+      if (!nombre) return fail('Escribe tu nombre.', campos[0]);
+      if (!apellido) return fail('Escribe tu apellido.', campos[1]);
+      const n = Number(edad);
+      if (!Number.isInteger(n) || n < 16 || n > 90) {
+        return fail('Indica una edad entre 16 y 90.', campos[2]);
       }
-      dots.forEach((d, n) => d.addEventListener('click', () => show(n)));
-      setInterval(() => show((idx + 1) % screens.length), 4200);
-    });
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+        return fail('Revisa tu dirección de email.', campos[3]);
+      }
 
-    // Captación de emails
-    const ENDPOINT = '/api/subscribe';
+      btn.disabled = true;
+      btn.setAttribute('aria-busy', 'true');
+      btn.textContent = 'Enviando…';
 
-    document.querySelectorAll('form[data-signup]').forEach(form => {
-      const base = form.id.replace(/Form$/, '');
-      const errorEl = document.getElementById(base + 'Error');
-      const successEl = document.getElementById(base + 'Success');
-      const input = form.querySelector('input[name="email"]');
-      const btn = form.querySelector('button[type="submit"]');
-      const btnLabel = btn.textContent;
+      try {
+        const res = await fetch(ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre, apellido, edad, email,
+            empresa: form.querySelector('input[name="empresa"]').value,
+            origen: 'lista',
+            ref: REF
+          })
+        });
 
-      const fail = msg => {
-        errorEl.textContent = msg;
-        errorEl.classList.add('visible');
-      };
+        const data = await res.json().catch(() => ({}));
 
-      form.addEventListener('submit', async e => {
-        e.preventDefault();
-        errorEl.classList.remove('visible');
-        errorEl.textContent = '';
+        if (res.ok) {
+          form.style.display = 'none';
+          posNum.textContent = '#' + Number(data.posicion || 0).toLocaleString('es-ES');
+          posNum.classList.add('on');
+          posNota.textContent = data.yaApuntado
+            ? 'Ya estabas en la lista. Ésta es tu posición.'
+            : 'Sube posiciones invitando a tus amigos';
 
-        const email = input.value.trim();
-        // Validación propia: el mensaje nativo no se puede traducir ni estilar
-        if (!email) return fail('Escribe tu email.');
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
-          return fail('Ese email no parece válido. Revísalo.');
+          const url = `${location.origin}/?ref=${encodeURIComponent(data.codigo || '')}`;
+          linkEl.textContent = url.replace(/^https?:\/\//, '');
+          copyBtn.disabled = false;
+          copyBtn.dataset.url = url;
+
+          notaEl.textContent = data.invitados
+            ? `Ya has traído a ${data.invitados} persona${data.invitados === 1 ? '' : 's'}. Comparte tu enlace para seguir subiendo.`
+            : 'Comparte tu enlace: cada persona que entre con él te sube posiciones.';
+
+          document.getElementById('listaSuccess').scrollIntoView({ block: 'center' });
+          return;
         }
 
-        btn.disabled = true;
-        btn.setAttribute('aria-busy', 'true');
-        btn.textContent = 'Enviando…';
-
-        try {
-          const res = await fetch(ENDPOINT, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email,
-              empresa: form.querySelector('input[name="empresa"]').value,
-              origen: form.id === 'heroForm' ? 'hero' : 'cta'
-            })
-          });
-
-          if (res.ok) {
-            form.style.display = 'none';
-            successEl.style.display = 'block';
-            return;
-          }
-
-          const data = await res.json().catch(() => ({}));
-          if (res.status === 429) {
-            fail('Demasiados intentos. Espera un momento y vuelve a probar.');
-          } else {
-            fail(data.error || 'No hemos podido apuntarte. Inténtalo en un momento.');
-          }
-        } catch {
-          fail('Fallo de conexión. Comprueba tu red e inténtalo de nuevo.');
-        } finally {
-          btn.disabled = false;
-          btn.removeAttribute('aria-busy');
-          btn.textContent = btnLabel;
-        }
-      });
+        if (res.status === 429) fail('Demasiados intentos. Espera un momento y vuelve a probar.');
+        else fail(data.error || 'No hemos podido apuntarte. Inténtalo en un momento.');
+      } catch {
+        fail('Fallo de conexión. Comprueba tu red e inténtalo de nuevo.');
+      } finally {
+        btn.disabled = false;
+        btn.removeAttribute('aria-busy');
+        btn.textContent = btnLabel;
+      }
     });
 
-    // Scroll reveal
-    const io = new IntersectionObserver(entries => {
-      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-    }, { threshold: 0.1 });
-    document.querySelectorAll('.fade-up').forEach(el => io.observe(el));
-  </script>
+    copyBtn.addEventListener('click', async () => {
+      const url = copyBtn.dataset.url;
+      if (!url) return;
+      try {
+        await navigator.clipboard.writeText(url);
+      } catch {
+        // Safari antiguo y contextos sin permiso: seleccionar para copiar a mano
+        const r = document.createRange();
+        r.selectNodeContents(linkEl);
+        const sel = getSelection();
+        sel.removeAllRanges();
+        sel.addRange(r);
+      }
+      const antes = copyBtn.textContent;
+      copyBtn.textContent = 'Copiado';
+      setTimeout(() => { copyBtn.textContent = antes; }, 1800);
+    });
+  });
+</script>
 </body>
 </html>

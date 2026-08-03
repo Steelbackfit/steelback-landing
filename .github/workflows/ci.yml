@@ -45,3 +45,26 @@ jobs:
             exit 1
           fi
           echo "dist/ limpio"
+
+      - name: Las tarjetas de transformaciones se han generado
+        run: |
+          # Si el marcador sigue ahí, el build no inyectó las tarjetas
+          if grep -q 'TRANSFORMACIONES' dist/index.html; then
+            echo "::error::El marcador <!--TRANSFORMACIONES--> no se sustituyó"
+            exit 1
+          fi
+          grep -q 'tcard' dist/index.html
+          echo "tarjetas presentes"
+
+      - name: Las fotos de transformaciones no pesan de más
+        run: |
+          fallo=0
+          for f in uploads/transformaciones/*.{jpg,jpeg,png,webp,avif}; do
+            [ -e "$f" ] || continue
+            bytes=$(stat -c%s "$f")
+            if [ "$bytes" -gt 307200 ]; then
+              echo "::error file=$f::$f pesa $((bytes/1024)) KB (máximo 300 KB)"
+              fallo=1
+            fi
+          done
+          exit $fallo

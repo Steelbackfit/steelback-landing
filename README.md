@@ -178,7 +178,7 @@ Parámetros: `?formato=csv` y `?limite=N` (por defecto 200, máximo 1000).
 ## Desarrollo
 
 ```bash
-npm test              # 12 tests de validación, sin red
+npm test              # 20 tests de validación, sin red
 npm run build         # tests + genera dist/
 npm run db:local      # crea las tablas en la D1 local
 npm run dev           # servidor local con D1 y bindings de prueba
@@ -192,7 +192,8 @@ GUIA-NUEVA-LANDING.md      cómo montar otra landing igual que ésta
 lib/validation.mjs         lógica pura: validación, hashing, CSV
 functions/api/subscribe.js POST /api/subscribe — alta
 functions/api/leads.js     GET  /api/leads     — consulta (token)
-schema.sql                 tablas de D1
+schema.sql                 tablas de D1 (instalación nueva)
+migrations/                cambios de esquema sobre bases ya creadas
 scripts/build.mjs          copia la whitelist a dist/
 test/                      node:test
 ```

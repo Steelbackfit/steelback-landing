@@ -1,11 +1,11 @@
 /**
- * POST /api/subscribe — Cloudflare Pages Function
+ * POST /api/subscribe — alta en la lista de espera.
  *
- * Guarda el alta en la base de datos D1 y, si hay proveedor configurado,
- * avisa por email.
+ * Guarda nombre, apellido, edad y email en D1, asigna posición en la cola y
+ * un código de invitación propio, y registra quién invitó a quién.
  *
  * Binding (Pages → Settings → Functions → D1 database bindings):
- *   DB               base de datos D1 `steelback-leads`
+ *   DB               base de datos D1
  *
  * Variables de entorno:
  *   IP_SALT            secreto. Sal para hashear la IP. Obligatoria.
@@ -18,6 +18,7 @@
 import {
   validarAlta,
   huellaIp,
+  baseCodigo,
   MAX_BODY,
   RATE_LIMIT,
   RATE_WINDOW_MIN,
@@ -58,7 +59,7 @@ export async function onRequestPost({ request, env }) {
   if (!res.ok && res.bot) return json({ ok: true });
   if (!res.ok) return json({ error: res.error }, res.status);
 
-  const { email, origen } = res.alta;
+  const { nombre, apellido, edad, email, origen, referido } = res.alta;
   const ip = request.headers.get('CF-Connecting-IP') || '0.0.0.0';
   const ua = (request.headers.get('User-Agent') || '').slice(0, 255);
 
@@ -78,42 +79,94 @@ export async function onRequestPost({ request, env }) {
 
   try {
     // Rate limit por IP dentro de la ventana
-    const { results: conteo } = await env.DB.prepare(
+    const lim = await env.DB.prepare(
       'SELECT COUNT(*) AS n FROM intentos WHERE ip_hash = ? AND fecha > ?'
-    ).bind(ipHash, desde).all();
+    ).bind(ipHash, desde).first();
 
-    if ((conteo?.[0]?.n ?? 0) >= RATE_LIMIT) {
+    if ((lim?.n ?? 0) >= RATE_LIMIT) {
       return json({ error: 'Demasiados intentos. Inténtalo más tarde.' }, 429);
     }
 
-    await env.DB.batch([
-      env.DB.prepare('INSERT INTO intentos (ip_hash, fecha) VALUES (?, ?)')
-        .bind(ipHash, ahora.toISOString()),
-      // ON CONFLICT: apuntarse dos veces no es un error para quien lo hace,
-      // solo refrescamos el origen y no duplicamos la fila.
-      env.DB.prepare(
-        `INSERT INTO leads (email, origen, fecha, user_agent, ip_hash)
-         VALUES (?, ?, ?, ?, ?)
-         ON CONFLICT(email) DO UPDATE SET origen = excluded.origen`
-      ).bind(email, origen, ahora.toISOString(), ua, ipHash),
-      // Limpieza oportunista de la ventana de rate limit
-      env.DB.prepare('DELETE FROM intentos WHERE fecha < ?').bind(desde),
-    ]);
+    await env.DB.prepare('INSERT INTO intentos (ip_hash, fecha) VALUES (?, ?)')
+      .bind(ipHash, ahora.toISOString()).run();
+
+    // ¿Ya estaba apuntado? Entonces conserva su posición y su código: apuntarse
+    // dos veces no debe hacerte perder el sitio en la cola.
+    const previo = await env.DB.prepare(
+      'SELECT posicion, codigo_invitacion FROM leads WHERE email = ?'
+    ).bind(email).first();
+
+    if (previo) {
+      await env.DB.prepare(
+        `UPDATE leads SET nombre = ?, apellido = ?, edad = ?, origen = ?, user_agent = ?
+         WHERE email = ?`
+      ).bind(nombre, apellido, edad, origen, ua, email).run();
+
+      return json({
+        ok: true,
+        yaApuntado: true,
+        posicion: previo.posicion,
+        codigo: previo.codigo_invitacion,
+        invitados: await contarInvitados(env.DB, previo.codigo_invitacion),
+      });
+    }
+
+    const total = await env.DB.prepare('SELECT COUNT(*) AS n FROM leads').first();
+    const posicion = (total?.n ?? 0) + 1;
+    const codigo = await codigoLibre(env.DB, baseCodigo(nombre, apellido, email));
+
+    await env.DB.prepare(
+      `INSERT INTO leads
+         (email, nombre, apellido, edad, origen, fecha, user_agent, ip_hash,
+          posicion, codigo_invitacion, referido_por)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      email, nombre, apellido, edad, origen, ahora.toISOString(), ua, ipHash,
+      posicion, codigo, referido
+    ).run();
+
+    // Limpieza oportunista de la ventana de rate limit
+    await env.DB.prepare('DELETE FROM intentos WHERE fecha < ?').bind(desde).run();
+
+    // El alta ya está persistida: un fallo del email no debe romper la respuesta.
+    if (env.RESEND_API_KEY) {
+      try {
+        await notificar({ nombre, apellido, edad, email, origen, posicion, referido }, env);
+      } catch (err) {
+        console.error('Fallo al notificar el alta', email, err);
+      }
+    }
+
+    return json({ ok: true, posicion, codigo, invitados: 0 });
   } catch (err) {
     console.error('Fallo al guardar el alta', email, err);
     return json({ error: 'No hemos podido apuntarte. Inténtalo en un momento.' }, 500);
   }
+}
 
-  // El alta ya está persistida: un fallo del email no debe romper la respuesta.
-  if (env.RESEND_API_KEY) {
-    try {
-      await notificar({ email, origen, fecha: ahora.toISOString() }, env);
-    } catch (err) {
-      console.error('Fallo al notificar el alta', email, err);
-    }
+/** Cuántas personas se han apuntado con el código de alguien. */
+async function contarInvitados(db, codigo) {
+  if (!codigo) return 0;
+  const r = await db.prepare('SELECT COUNT(*) AS n FROM leads WHERE referido_por = ?')
+    .bind(codigo).first();
+  return r?.n ?? 0;
+}
+
+/**
+ * Busca un código libre a partir de la base. Dos "Marcos Ruiz" distintos
+ * generan la misma base, así que hay que desempatar o el INSERT falla por
+ * la restricción UNIQUE.
+ */
+async function codigoLibre(db, base) {
+  for (let i = 0; i < 12; i++) {
+    const cand = i === 0 ? base : `${base}-${i + 1}`;
+    const existe = await db.prepare(
+      'SELECT 1 AS x FROM leads WHERE codigo_invitacion = ?'
+    ).bind(cand).first();
+    if (!existe) return cand;
   }
-
-  return json({ ok: true });
+  // Salida de emergencia: sufijo aleatorio. Preferible a fallar el alta.
+  return `${base}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
 async function verificarTurnstile(token, ip, secret) {
@@ -130,7 +183,7 @@ async function verificarTurnstile(token, ip, secret) {
   return data.success === true;
 }
 
-async function notificar({ email, origen, fecha }, env) {
+async function notificar({ nombre, apellido, edad, email, origen, posicion, referido }, env) {
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -141,8 +194,15 @@ async function notificar({ email, origen, fecha }, env) {
       from: env.NOTIFY_FROM || 'Steelback <web@steelbackfit.com>',
       to: [env.NOTIFY_TO || NOTIFY_TO_DEFAULT],
       reply_to: email,
-      subject: `Nueva alta en la landing: ${email}`,
-      text: `Email:  ${email}\nOrigen: formulario ${origen}\nFecha:  ${fecha}`,
+      subject: `Nueva alta #${posicion}: ${nombre} ${apellido}`,
+      text: [
+        `Nombre:   ${nombre} ${apellido}`,
+        `Edad:     ${edad}`,
+        `Email:    ${email}`,
+        `Posición: #${posicion}`,
+        `Origen:   ${origen}`,
+        `Invitado por: ${referido || '—'}`,
+      ].join('\n'),
     }),
   });
   if (!r.ok) throw new Error(`Resend respondió ${r.status}: ${await r.text()}`);

@@ -2,8 +2,8 @@
  * GET /api/leads — consulta de altas. Protegido por token.
  *
  * Uso:
- *   curl -H "Authorization: Bearer $ADMIN_TOKEN" https://steelback.com/api/leads
- *   curl -H "Authorization: Bearer $ADMIN_TOKEN" "https://steelback.com/api/leads?formato=csv" -o leads.csv
+ *   curl -H "Authorization: Bearer $ADMIN_TOKEN" https://tu-dominio/api/leads
+ *   curl -H "Authorization: Bearer $ADMIN_TOKEN" "https://tu-dominio/api/leads?formato=csv" -o leads.csv
  *
  * Variables de entorno:
  *   ADMIN_TOKEN   secreto, obligatorio. Sin él el endpoint responde 503:
@@ -14,15 +14,17 @@ import { comparaSegura, aCsv } from '../../lib/validation.mjs';
 
 const LIMITE_MAX = 1000;
 
+const cabeceras = extra => ({
+  'Cache-Control': 'no-store',
+  'X-Robots-Tag': 'noindex, nofollow',
+  'X-Content-Type-Options': 'nosniff',
+  ...extra,
+});
+
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body, null, 2), {
     status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-store',
-      // Que ningún intermediario ni buscador guarde esto
-      'X-Robots-Tag': 'noindex, nofollow',
-    },
+    headers: cabeceras({ 'Content-Type': 'application/json' }),
   });
 
 export async function onRequestGet({ request, env }) {
@@ -38,11 +40,10 @@ export async function onRequestGet({ request, env }) {
   if (!comparaSegura(token, env.ADMIN_TOKEN)) {
     return new Response(JSON.stringify({ error: 'No autorizado.' }), {
       status: 401,
-      headers: {
+      headers: cabeceras({
         'Content-Type': 'application/json',
         'WWW-Authenticate': 'Bearer',
-        'Cache-Control': 'no-store',
-      },
+      }),
     });
   }
 
@@ -53,27 +54,40 @@ export async function onRequestGet({ request, env }) {
     LIMITE_MAX
   );
 
+  // invitados: cuántas altas trajo cada persona con su código.
   const { results } = await env.DB.prepare(
-    `SELECT email, origen, fecha, user_agent
-     FROM leads ORDER BY fecha DESC LIMIT ?`
+    `SELECT l.posicion, l.nombre, l.apellido, l.edad, l.email, l.origen,
+            l.codigo_invitacion, l.referido_por, l.fecha, l.user_agent,
+            (SELECT COUNT(*) FROM leads r WHERE r.referido_por = l.codigo_invitacion)
+              AS invitados
+     FROM leads l
+     ORDER BY l.posicion ASC
+     LIMIT ?`
   ).bind(limite).all();
-
-  const { results: total } = await env.DB.prepare(
-    'SELECT COUNT(*) AS n FROM leads'
-  ).all();
 
   if (formato === 'csv') {
     return new Response(aCsv(results), {
-      headers: {
+      headers: cabeceras({
         'Content-Type': 'text/csv; charset=utf-8',
         'Content-Disposition': 'attachment; filename="leads-steelback.csv"',
-        'Cache-Control': 'no-store',
-        'X-Robots-Tag': 'noindex, nofollow',
-      },
+      }),
     });
   }
 
-  return json({ total: total?.[0]?.n ?? 0, mostrados: results.length, leads: results });
+  const resumen = await env.DB.prepare(
+    `SELECT COUNT(*) AS total,
+            COUNT(referido_por) AS por_invitacion,
+            CAST(AVG(edad) AS INTEGER) AS edad_media
+     FROM leads`
+  ).first();
+
+  return json({
+    total: resumen?.total ?? 0,
+    porInvitacion: resumen?.por_invitacion ?? 0,
+    edadMedia: resumen?.edad_media ?? null,
+    mostrados: results.length,
+    leads: results,
+  });
 }
 
 export const onRequest = ({ request }) =>
