@@ -7,6 +7,22 @@ Está escrita a partir de este repo, ya funcionando en producción. Los avisos
 marcados con ⚠️ son fallos que **ya ocurrieron aquí** y costaron tiempo: no son
 teoría.
 
+## Índice
+
+1. [Cómo funciona esto en 30 segundos](#1-como-funciona-esto-en-30-segundos)
+2. [Crear una landing nueva desde cero](#2-crear-una-landing-nueva-desde-cero)
+3. [Assets: cómo se gestionan](#3-assets-como-se-gestionan)
+4. [Formularios: el contrato completo](#4-formularios-el-contrato-completo)
+5. [Base de datos](#5-base-de-datos)
+6. [Secretos](#6-secretos)
+7. [Dominio](#7-dominio)
+8. [Tests y CI](#8-tests-y-ci)
+9. [Trampas conocidas](#9-trampas-conocidas)
+10. [Comprobación final antes de dar por buena una landing](#10-comprobacion-final-antes-de-dar-por-buena-una-landing)
+11. [Rediseñar la landing sin romper nada](#11-redisenar-la-landing-sin-romper-nada)
+12. [Comandos de referencia](#12-comandos-de-referencia)
+13. [Estructura de ficheros](#13-estructura-de-ficheros)
+
 ---
 
 ## 1. Cómo funciona esto en 30 segundos
@@ -579,7 +595,119 @@ Cloudflare, porque un CNAME en el ápex no es válido en DNS.
 el subdominio no resuelva.** La documentación de Cloudflare lo advierte
 expresamente: primero *Add a custom domain*, después el registro DNS.
 
-### 7.3 Mover todo el DNS a Cloudflare (solo si necesitas el dominio raíz)
+### 7.3 Trampas concretas de IONOS
+
+Documentado tras pelearse con ello de verdad. Si tu DNS está en IONOS:
+
+**No uses "Crear subdominio".** Esa opción crea un registro **A apuntando al
+hosting de IONOS** y lo deja **atado a un servicio**. Cuando luego intentes
+borrarlo desde la tabla DNS, te dirá:
+
+> *Este registro DNS pertenece a un servicio. Primero, desactive el servicio…*
+
+La salida es ir a **Dominios y SSL → tu dominio → Subdominios**, eliminar allí
+el subdominio, y solo entonces crear el CNAME desde la pestaña **DNS**.
+
+⚠️ **Cuidado con qué fila borras.** La tabla mezcla el dominio raíz y los
+subdominios. La fila `A @ …` es el **dominio raíz**, no tu subdominio: `@`
+significa "el dominio en sí". Borrarla (o desactivar su servicio "Default Site")
+toca tu web principal. La fila que buscas tiene el nombre del subdominio
+(`landing`), no `@`.
+
+**Formato de los campos:**
+
+| Campo | Correcto | Incorrecto |
+|---|---|---|
+| Nombre de host | `landing` | `landing.tudominio.com` (queda duplicado) |
+| Apunta a | `proyecto.pages.dev` | `https://proyecto.pages.dev/` |
+
+### 7.4 "That domain is already associated with an existing project"
+
+Cloudflare reserva el hostname globalmente en cuanto se da de alta una vez,
+aunque la validación no llegara a completarse. Si intentas añadirlo de nuevo,
+salta ese error.
+
+⚠️ **`wrangler pages project list` NO muestra los dominios personalizados
+pendientes** — su columna *Project Domains* solo enseña el `.pages.dev`. Tampoco
+sirven `wrangler pages download config` (solo devuelve bindings) ni ningún otro
+comando: en esta versión **no existe `wrangler pages domain`**. La única forma
+de ver el estado real es el panel.
+
+Qué hacer: entra en **Custom domains** del proyecto y busca el hostname en la
+lista. Estará ahí en *Pending* o *Error*. **No lo añadas otra vez**: arregla el
+DNS y pulsa **Check DNS records**. Si el estado es irrecuperable, bórralo de la
+lista y vuelve a añadirlo con el DNS ya correcto.
+
+Si no aparece en ningún proyecto tuyo, está reservado en otra cuenta. Lo más
+rápido es usar otro subdominio (`web.`, `app.`…) en vez de investigar.
+
+### 7.5 Diagnosticar un dominio que "no funciona"
+
+**Este es el árbol de decisión que ahorra horas.** El síntoma "no carga" tiene
+al menos cuatro causas distintas y se distinguen con dos comandos.
+
+**Paso 1 — ¿a qué IP estás llegando de verdad?**
+
+```bash
+curl -s -o /dev/null -w "%{remote_ip} | %{http_code}\n" http://tu.dominio.com/
+```
+
+**Paso 2 — ¿qué ve el resto del mundo?** (esquiva tu caché local)
+
+```bash
+for ns in 8.8.8.8 1.1.1.1 9.9.9.9; do
+  printf "%-9s " $ns; nslookup -type=CNAME tu.dominio.com $ns 2>&1 | grep -i canonical
+done
+```
+
+**Paso 3 — ¿funciona el servidor, ignorando el DNS?** Fuerza la IP de destino:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" \
+  --resolve tu.dominio.com:443:188.114.97.5 https://tu.dominio.com/
+```
+
+Cruza los resultados:
+
+| Local | Resolvers públicos | `--resolve` | Diagnóstico |
+|---|---|---|---|
+| IP vieja | IP nueva | 200 | **Caché de DNS local.** Todo está bien; solo tu red va retrasada |
+| IP nueva | IP nueva | 200 | Funciona. Si el navegador falla, es su propia caché |
+| IP nueva | IP nueva | 404 `nginx` | El hostname **no está activo** en el proyecto de Pages |
+| NXDOMAIN | NXDOMAIN | — | El registro DNS no existe o no se guardó |
+| IP del proveedor | IP del proveedor | — | El registro es **A**, no CNAME, o quedó uno residual |
+
+**Cómo distinguir los dos 404:**
+
+- `Server: nginx` **sin** cabecera `CF-Ray` → estás llegando a Cloudflare pero
+  el hostname no está mapeado a ningún proyecto. Falta activarlo en el panel.
+- `Server: Apache` y HTML del proveedor → ni siquiera has salido de tu
+  proveedor de DNS: el registro sigue apuntando a ellos.
+- Con `CF-Ray` y 200 → funciona.
+
+**Si es caché local** (el caso más frecuente y el más confuso):
+
+```bash
+ipconfig /flushdns          # Windows
+sudo dscacheutil -flushcache  # macOS
+```
+
+⚠️ **Vaciar la caché de Windows no basta si tu router también cachea.** Es él
+quien responde a las aplicaciones. Reinicia el router, o espera al TTL del
+registro anterior — comprueba cuál era:
+
+```bash
+nslookup -debug -type=CNAME tu.dominio.com ns-de-tu-proveedor 2>&1 | grep ttl
+```
+
+Un TTL de 3600 significa **hasta una hora** de espera.
+
+**La prueba de 10 segundos:** abre la web en el móvil con **datos móviles, no
+wifi**. Usa el DNS de la operadora, así que se salta tu router entero. Si ahí
+carga, el problema es exclusivamente tu red local y el resto del mundo ya la ve
+bien.
+
+### 7.6 Mover todo el DNS a Cloudflare (solo si necesitas el dominio raíz)
 
 El registro se queda en tu registrador y le sigues pagando a ellos; solo cambian
 los nameservers. Cloudflare no cobra por esto.
@@ -600,7 +728,7 @@ deben quedar en **DNS only (nube gris)**: Cloudflare no hace de proxy de correo,
 y en naranja rompes la entrega. Los **TXT** de SPF y DKIM importan igual: sin
 ellos tu correo saliente empieza a caer en spam.
 
-### 7.3 Rutas y redirecciones
+### 7.7 Rutas y redirecciones
 
 `_redirects`, en la raíz de `dist/`:
 
@@ -670,6 +798,12 @@ Todas ocurrieron de verdad en este proyecto.
 | Los leads aparecen mezclados entre dos landings | `database_id` copiado de otro proyecto | Un `database_id` distinto por proyecto |
 | Todos los formularios devuelven 403 | `TURNSTILE_SECRET` puesto sin implementar el widget | Implementar §4.8 o quitar el secreto |
 | El formulario "funciona" pero no llega nada | El JS no lanza petición: falta `data-signup` | Revisar el contrato de §4.1 |
+| El dominio nuevo da 404 y en el panel pone *Active* | Caché de DNS local o del router; el TTL viejo aún corre | §7.5 — probar con `--resolve` y desde datos móviles |
+| 404 con `Server: nginx` y sin `CF-Ray` | Llegas a Cloudflare pero el hostname no está activo en el proyecto | Activarlo en Custom domains |
+| 404 con `Server: Apache` y HTML del proveedor | El registro sigue siendo A hacia tu proveedor | Sustituirlo por un CNAME |
+| *"That domain is already associated with an existing project"* | El hostname quedó reservado en un intento anterior | §7.4 — no re-añadir, buscarlo en la lista y reintentar |
+| IONOS no deja borrar el registro del subdominio | Se creó con "Crear subdominio" y está atado a un servicio | Eliminarlo desde **Subdominios**, no desde DNS |
+| Al borrar en IONOS avisa del servicio "Default Site" | Estás en la fila `@`, que es el **dominio raíz** | Buscar la fila con el nombre del subdominio |
 
 ---
 
@@ -728,7 +862,120 @@ tus ojos.
 
 ---
 
-## 11. Comandos de referencia
+## 11. Rediseñar la landing sin romper nada
+
+Cuando rehagas el diseño entero, el HTML y el CSS se tiran y se reescriben. El
+problema es que **hay contratos invisibles incrustados en ese HTML**: cosas que
+parecen decorativas, se borran sin pensar, y rompen la captación de emails sin
+dar ningún error.
+
+Ésta es la lista de lo que **no** puede desaparecer.
+
+### 11.1 Lo que el JS necesita literalmente
+
+Si rehaces el marcado, estos siete puntos tienen que sobrevivir tal cual:
+
+| Elemento | Si lo quitas… |
+|---|---|
+| `data-signup` en el `<form>` | El JS no engancha el formulario. **No pasa nada al enviar**: ni error ni petición |
+| `id` acabado en `Form` | El JS deriva de ahí los otros IDs. Sin el sufijo, no encuentra nada |
+| `id="<base>Error"` | Excepción de JS al intentar mostrar un error; el envío se queda colgado |
+| `id="<base>Success"` | El alta se guarda pero el usuario no ve confirmación y reenvía |
+| `name="email"` en el input | El JS busca `input[name="email"]`. Sin él, envía vacío |
+| El input honeypot `name="empresa"` | Empiezas a tragar spam |
+| `novalidate` en el `<form>` | Vuelve la validación nativa: mensajes en el idioma del navegador y sin estilar |
+
+Los tres IDs van acoplados por convención estricta:
+
+```
+id="heroForm"  →  id="heroError"  +  id="heroSuccess"
+```
+
+### 11.2 CSS que parece decorativo pero no lo es
+
+Al reescribir la hoja de estilos es fácil llevarse por delante:
+
+```css
+/* Sin esto el honeypot se VE, y los usuarios lo rellenan → altas rechazadas */
+.hp-field { position:absolute; left:-9999px; width:1px; height:1px;
+            opacity:0; pointer-events:none; }
+
+/* Sin esto los errores nunca se muestran: el JS solo añade la clase */
+.form-error { display:none; }
+.form-error.visible { display:block; }
+
+/* El JS pone display:block al acertar; si tu CSS lo fuerza a none, no se ve */
+.form-success { display:none; }
+
+/* Feedback de envío en curso */
+.email-btn[aria-busy="true"] { opacity:.65; cursor:progress; }
+```
+
+⚠️ **No conviertas `.hp-field` en `display:none`.** Los bots que interpretan CSS
+lo detectan y se lo saltan.
+
+### 11.3 Si extraes el CSS y el JS a ficheros
+
+Muy razonable en un rediseño, pero hay que tocar tres sitios a la vez:
+
+1. **`scripts/build.mjs`** — añade los ficheros nuevos a `ASSETS`, o darán 404
+   en producción aunque en local se vean.
+2. **`_headers`** — con el JS ya fuera del HTML puedes endurecer la CSP quitando
+   `'unsafe-inline'` de `script-src`. Hazlo solo cuando **no quede ni un
+   `onclick=` ni un `<script>` en línea**, o la página se queda sin JS.
+3. **Rutas absolutas** en el HTML: `/assets/app.js`, no `assets/app.js`.
+
+### 11.4 Si añades páginas nuevas
+
+Cada `.html` nuevo hay que sumarlo a `ASSETS` en `scripts/build.mjs`. Recuerda
+que un fichero en `dist/pagina.html` se sirve en `/pagina` (Pages quita el
+`.html`), mientras que `dist/pagina/index.html` provoca un 308 de `/pagina` a
+`/pagina/` — y si además pones una redirección de vuelta, **bucle infinito**
+(§7.7 y la trampa de la tabla).
+
+### 11.5 Si el rediseño trae librerías, fuentes o analítica
+
+Todo recurso externo **se bloquea en silencio** si no está en la CSP de
+`_headers`. La página carga a medias y no hay error visible salvo en la consola.
+
+| Añades | Directiva a tocar |
+|---|---|
+| Tailwind/Bootstrap por CDN | `style-src` |
+| Alpine, HTMX, jQuery por CDN | `script-src` |
+| Google Analytics, Meta Pixel | `script-src` **y** `connect-src` |
+| Vídeo embebido | `frame-src` |
+| Fuentes que no sean Google | `font-src` |
+| Imágenes de otro dominio | `img-src` |
+
+### 11.6 Si cambias los formularios de sitio o añades uno
+
+Recuerda los **tres** puntos de §4.3: marcado, el `origen` en el JS y la
+whitelist `ORIGENES` del servidor. Si te dejas el tercero, las altas se guardan
+con `origen: "desconocido"` y pierdes para siempre el dato de qué formulario
+convierte mejor. Añade también su test.
+
+### 11.7 Antes de dar el rediseño por bueno
+
+```bash
+npm run dev     # NO abras index.html con doble clic: no reproduce producción
+```
+
+- [ ] Enviar cada formulario y confirmar que el email llega a `/api/leads`
+- [ ] Probar con un email inválido: mensaje en castellano, sin petición de red
+- [ ] Consola del navegador: **cero** errores y cero avisos de CSP
+- [ ] Verlo a 390 px de ancho con los ojos
+- [ ] Modo avión: debe salir "Fallo de conexión…" y el botón recuperarse
+- [ ] `npm test` en verde (si no, el despliegue se detiene)
+- [ ] Repetir la comprobación de §10 contra la URL ya desplegada
+
+⚠️ **`scrollWidth === clientWidth` no demuestra que no haya desbordamiento.**
+`body { overflow-x: hidden }` lo enmascara: el contenido se corta pero la
+métrica sale limpia. Aquí eso ocultó un fallo real en móvil durante todo un
+rediseño. Míralo con los ojos.
+
+---
+
+## 12. Comandos de referencia
 
 ```bash
 npm test              # 12 tests, sin red
@@ -751,7 +998,7 @@ npx wrangler d1 export BD --remote --output backup.sql
 
 ---
 
-## 12. Estructura de ficheros
+## 13. Estructura de ficheros
 
 ```
 index.html                    la landing (CSS y JS en línea)
